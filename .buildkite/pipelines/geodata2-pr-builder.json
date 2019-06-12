@@ -1,0 +1,26 @@
+{
+  "repository": "git@github.com:SemanticSugar/geodata2",
+  "default_branch": "master",
+  "branch_configuration": "only-build-pull-requests",
+  "provider": {
+    "id": "github",
+    "webhook_url": "https://webhook.buildkite.com/deliver/c88aaa1c29a701a19b553d09d8b949e93e3030d79a4800256d",
+    "settings": {
+      "publish_commit_status": true,
+      "build_pull_requests": true,
+      "build_pull_request_forks": false,
+      "build_tags": false,
+      "publish_commit_status_per_step": false,
+      "repository": "SemanticSugar/geodata2",
+      "trigger_mode": "code"
+    }
+  },
+  "steps": [
+    {
+      "type": "script",
+      "name": "Start",
+      "command": "buildkite-agent pipeline upload .buildkite/pipelines/geodata2-pr-builder/start.yml",
+      "agent_query_rules": ["queue=rtb"]
+    }
+  ]
+}
