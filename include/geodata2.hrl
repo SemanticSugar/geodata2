@@ -1,4 +1,4 @@
--define(BINARY_COPY(Val), Val) %% - faster, less memory while you don't reload files. If you do reload you can potentially prevent old binaries from getting garbage collected
+-define(BINARY_COPY(Val), Val). %% - faster, less memory while you don't reload files. If you do reload you can potentially prevent old binaries from getting garbage collected
 %% -define(BINARY_COPY(Val), binary:copy(Val)). %% bit slower, more memory, but allows garbage collecting old large binaries with ease
 
 -define(IPV6, 6).
