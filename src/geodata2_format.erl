@@ -47,9 +47,9 @@ make_meta(Data, Meta) ->
             end,
     Languages = proplists:get_value(<<"languages">>, Meta, []),
     DBType = proplists:get_value(<<"database_type">>, Meta),
-    Timestamp = calendar:gregorian_seconds_to_datetime(62167219200 +
-                                                         proplists:get_value(<<"build_epoch">>,
-                                                                             Meta)), %%{{1970,1,1},{0,0,0}} + epoch,
+    Epoch = proplists:get_value(<<"build_epoch">>, Meta),
+    Origin = 62167219200, % {{1970,1,1},{0,0,0}}
+    Timestamp = calendar:gregorian_seconds_to_datetime(Origin + Epoch),
     Vsn = {proplists:get_value(<<"binary_format_major_version">>, Meta),
            proplists:get_value(<<"binary_format_minor_version">>, Meta)},
     true = IPVersion == ?IPV6 orelse IPVersion == ?IPV4,
