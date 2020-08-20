@@ -20,7 +20,7 @@
 -define(EX_GEO_FLOAT, 15).
 
 %% API
--export([parse/2, unpack/2, meta/1, lookup/4]).
+-export([parse/2, unpack/2, meta/1, lookup/4, is_ipv6/1]).
 
 meta(Data) ->
     Size = byte_size(Data),
@@ -95,6 +95,10 @@ v4_tree_start(Data, #meta{ip_version = ?IPV6} = Meta) ->
     Bits = <<0:80, 16#FFFF:16>>,
     {error, {partial, Pos}} = lookup(Meta, Data, Bits, ?IPV6),
     Pos.
+
+%% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
+is_ipv6(#meta{ip_version = ?IPV6}) -> true;
+is_ipv6(_) -> false.
 
 lookup(#meta{ip_version = V} = Meta,
        Data,
