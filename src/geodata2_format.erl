@@ -110,6 +110,7 @@ lookup(#meta{ip_version = ?IPV6, v4_start = V4Start} = Meta,
        Bits,
        ?IPV4) -> %%lookup v4 in v6 db
     lookup_pos(Meta, Data, Bits, V4Start);
+%% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
 lookup(_,
        _,
        _,
