@@ -33,43 +33,46 @@ make_meta(Data, Meta) ->
     IPVersion = proplists:get_value(<<"ip_version">>, Meta),
     RecordSize = proplists:get_value(<<"record_size">>, Meta),
     NodeCount = proplists:get_value(<<"node_count">>, Meta),
-    Descr = case proplists:get_value(<<"description">>, Meta, []) of
-              [] ->
-                  <<"Unknown">>;
-              DescrMap ->
-                  case proplists:get_value(<<"en">>, DescrMap) of
+    Descr =
+        case proplists:get_value(<<"description">>, Meta, []) of
+            [] ->
+                <<"Unknown">>;
+            DescrMap ->
+                case proplists:get_value(<<"en">>, DescrMap) of
                     undefined ->
                         [{_, Val} | _Rest] = DescrMap,
                         Val;
                     Val ->
                         Val
-                  end
-            end,
+                end
+        end,
     Languages = proplists:get_value(<<"languages">>, Meta, []),
     DBType = proplists:get_value(<<"database_type">>, Meta),
     Epoch = proplists:get_value(<<"build_epoch">>, Meta),
     Origin = 62167219200, % {{1970,1,1},{0,0,0}}
     Timestamp = calendar:gregorian_seconds_to_datetime(Origin + Epoch),
-    Vsn = {proplists:get_value(<<"binary_format_major_version">>, Meta),
-           proplists:get_value(<<"binary_format_minor_version">>, Meta)},
+    Vsn =
+        {proplists:get_value(<<"binary_format_major_version">>, Meta),
+         proplists:get_value(<<"binary_format_minor_version">>, Meta)},
     true = IPVersion == ?IPV6 orelse IPVersion == ?IPV4,
     true = RecordSize =/= undefined,
     true = NodeCount =/= undefined,
     true = DBType =/= undefined,
 
     TreeSize = RecordSize * 2 div 8 * NodeCount,
-    MetaRec = #meta{ip_version = IPVersion, %%v4 or v6
-                    record_size = RecordSize, %%bits
-                    node_count = NodeCount, %%number
-                    descr = Descr,
-                    languages = Languages,
-                    database_type = DBType,
-                    timestamp = Timestamp,
-                    vsn = Vsn,
-                    whole = RecordSize div 8 * 8, %%bits
-                    remdr = RecordSize rem 8, %% bits
-                    tree_size = TreeSize, %%bytes
-                    data_start = TreeSize + 16}, %%bytes
+    MetaRec =
+        #meta{ip_version = IPVersion, %%v4 or v6
+              record_size = RecordSize, %%bits
+              node_count = NodeCount, %%number
+              descr = Descr,
+              languages = Languages,
+              database_type = DBType,
+              timestamp = Timestamp,
+              vsn = Vsn,
+              whole = RecordSize div 8 * 8, %%bits
+              remdr = RecordSize rem 8, %% bits
+              tree_size = TreeSize, %%bytes
+              data_start = TreeSize + 16}, %%bytes
     %% optimization for ipv4 lookups in ipv6 database
     %% - begin search for IPV4s from the position of ::ffff:0:0/96 in the tree,
     %%   saves 96 movements on each lookup
@@ -80,10 +83,10 @@ read_meta(_Data, Pos) when Pos =< 0 ->
     error(<<"Meta not found.">>);
 read_meta(Data, Pos) ->
     case Data of
-      <<_:Pos/binary, 16#ab, 16#cd, 16#ef, "MaxMind.com", RawMeta/binary>> ->
-          {ok, RawMeta};
-      _ ->
-          read_meta(Data, Pos - 1)
+        <<_:Pos/binary, 16#ab, 16#cd, 16#ef, "MaxMind.com", RawMeta/binary>> ->
+            {ok, RawMeta};
+        _ ->
+            read_meta(Data, Pos - 1)
     end.
 
 %% optimization for ipv4 lookups in ipv6 database
@@ -114,7 +117,7 @@ lookup(_,
 
 lookup_pos(#meta{node_count = NodeCount}, _, <<>>, Pos)
     when Pos <
-           NodeCount -> %% can't happen in the real db, gets used for lookup of v4 tree start
+             NodeCount -> %% can't happen in the real db, gets used for lookup of v4 tree start
     {error, {partial, Pos}};
 lookup_pos(#meta{node_count = NodeCount,
                  record_size = RecordSize,
