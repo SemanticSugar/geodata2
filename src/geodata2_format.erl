@@ -100,8 +100,10 @@ v4_tree_start(Data, #meta{ip_version = ?IPV6} = Meta) ->
     Pos.
 
 %% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
-is_ipv6(#meta{ip_version = ?IPV6}) -> true;
-is_ipv6(_) -> false.
+is_ipv6(#meta{ip_version = ?IPV6}) ->
+    true;
+is_ipv6(_) ->
+    false.
 
 lookup(#meta{ip_version = V} = Meta,
        Data,

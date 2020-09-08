@@ -35,23 +35,24 @@ stop() ->
 
 new(File) ->
     case filelib:is_file(File) of
-      true ->
-          {ok, RawData} = file:read_file(File),
-          Data = case is_compressed(File) of
-                   true ->
-                       zlib:gunzip(RawData);
-                   false ->
-                       RawData
-                 end,
-          {ok, Meta} = geodata2_format:meta(Data),
-          %% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
-          set_is_ipv6_mmdb(Meta),
-          ets:new(?GEODATA2_STATE_TID, [set, protected, named_table, {read_concurrency, true}]),
-          ets:insert(?GEODATA2_STATE_TID, {data, Data}),
-          ets:insert(?GEODATA2_STATE_TID, {meta, Meta}),
-          {ok, #state{}};
-      _ ->
-          {stop, {geodata2_dbfile_not_found, File}}
+        true ->
+            {ok, RawData} = file:read_file(File),
+            Data =
+                case is_compressed(File) of
+                    true ->
+                        zlib:gunzip(RawData);
+                    false ->
+                        RawData
+                end,
+            {ok, Meta} = geodata2_format:meta(Data),
+            %% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
+            set_is_ipv6_mmdb(Meta),
+            ets:new(?GEODATA2_STATE_TID, [set, protected, named_table, {read_concurrency, true}]),
+            ets:insert(?GEODATA2_STATE_TID, {data, Data}),
+            ets:insert(?GEODATA2_STATE_TID, {meta, Meta}),
+            {ok, #state{}};
+        _ ->
+            {stop, {geodata2_dbfile_not_found, File}}
     end.
 
 -spec init(_) -> {ok, state()} | {stop, tuple()}.

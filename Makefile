@@ -30,3 +30,6 @@ build-plt:
 
 dialyzer:
 	$(REBAR) dialyze $(REBAR_FLAGS)
+
+format:
+	$(REBAR) format
