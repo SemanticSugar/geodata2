@@ -41,46 +41,46 @@ make_ip(IP) when is_binary(IP) ->
     make_ip(binary_to_list(IP));
 make_ip(IP) when is_list(IP) ->
     case catch address_fast(IP, 0, 24) of
-      N when is_integer(N) ->
-          make_ip(N);
-      _ ->
-          case inet_parse:address(IP) of
-            {ok, Tuple} ->
-                make_ip(Tuple);
-            Error ->
-                Error
-          end
+        N when is_integer(N) ->
+            make_ip(N);
+        _ ->
+            case inet_parse:address(IP) of
+                {ok, Tuple} ->
+                    make_ip(Tuple);
+                Error ->
+                    Error
+            end
     end;
 make_ip(_) ->
     {error, format}.
 
 address_fast([N2, N1, N0, $. | Rest], Num, Shift) when Shift >= 8 ->
     case list_to_integer([N2, N1, N0]) of
-      N when N =< 255 ->
-          address_fast(Rest, Num bor (N bsl Shift), Shift - 8)
+        N when N =< 255 ->
+            address_fast(Rest, Num bor (N bsl Shift), Shift - 8)
     end;
 address_fast([N1, N0, $. | Rest], Num, Shift) when Shift >= 8 ->
     case list_to_integer([N1, N0]) of
-      N when N =< 255 ->
-          address_fast(Rest, Num bor (N bsl Shift), Shift - 8)
+        N when N =< 255 ->
+            address_fast(Rest, Num bor (N bsl Shift), Shift - 8)
     end;
 address_fast([N0, $. | Rest], Num, Shift) when Shift >= 8 ->
     case N0 - $0 of
-      N when N =< 255 ->
-          address_fast(Rest, Num bor (N bsl Shift), Shift - 8)
+        N when N =< 255 ->
+            address_fast(Rest, Num bor (N bsl Shift), Shift - 8)
     end;
 address_fast(L = [_N2, _N1, _N0], Num, 0) ->
     case list_to_integer(L) of
-      N when N =< 255 ->
-          Num bor N
+        N when N =< 255 ->
+            Num bor N
     end;
 address_fast(L = [_N1, _N0], Num, 0) ->
     case list_to_integer(L) of
-      N when N =< 255 ->
-          Num bor N
+        N when N =< 255 ->
+            Num bor N
     end;
 address_fast([N0], Num, 0) ->
     case N0 - $0 of
-      N when N =< 255 ->
-          Num bor N
+        N when N =< 255 ->
+            Num bor N
     end.

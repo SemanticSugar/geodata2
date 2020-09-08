@@ -18,10 +18,10 @@ lookup(IP) ->
     [{data, Data}] = ets:lookup(?GEODATA2_STATE_TID, data),
     [{meta, Meta}] = ets:lookup(?GEODATA2_STATE_TID, meta),
     case geodata2_ip:make_ip(IP) of
-      {ok, Bits, IPV} ->
-          geodata2_format:lookup(Meta, Data, Bits, IPV);
-      {error, Reason} ->
-          {error, Reason}
+        {ok, Bits, IPV} ->
+            geodata2_format:lookup(Meta, Data, Bits, IPV);
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 start() ->
@@ -57,10 +57,10 @@ new(File) ->
 -spec init(_) -> {ok, state()} | {stop, tuple()}.
 init(_Args) ->
     case get_env(geodata2, dbfile) of
-      {ok, File} ->
-          new(File);
-      _ ->
-          {stop, {geodata2_dbfile_unspecified}}
+        {ok, File} ->
+            new(File);
+        _ ->
+            {stop, {geodata2_dbfile_unspecified}}
     end.
 
 handle_call(_What, _From, State) ->
@@ -74,17 +74,18 @@ handle_cast(_Request, State) ->
 %%%===================================================================
 
 get_env(App, Key) ->
-    {ConfigModule, ConfigFun} = case application:get_env(geodata2, config_interp) of
-                                  {ok, {Cm, Cf}} ->
-                                      {Cm, Cf};
-                                  _ ->
-                                      {?MODULE, id}
-                                end,
+    {ConfigModule, ConfigFun} =
+        case application:get_env(geodata2, config_interp) of
+            {ok, {Cm, Cf}} ->
+                {Cm, Cf};
+            _ ->
+                {?MODULE, id}
+        end,
     case application:get_env(App, Key) of
-      {ok, Value} ->
-          {ok, ConfigModule:ConfigFun(Value)};
-      Other ->
-          Other
+        {ok, Value} ->
+            {ok, ConfigModule:ConfigFun(Value)};
+        Other ->
+            Other
     end.
 
 %% this is used to return app env values as-is when config_interp is not set:

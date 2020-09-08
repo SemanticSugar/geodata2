@@ -19,11 +19,7 @@ init([]) ->
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
     ChildName = child_proc,
-    ChildSpec = {ChildName,
-                 {geodata2, start_link, [ChildName]},
-                 permanent,
-                 5000,
-                 worker,
-                 [geodata2]},
+    ChildSpec =
+        {ChildName, {geodata2, start_link, [ChildName]}, permanent, 5000, worker, [geodata2]},
 
     {ok, {SupFlags, [ChildSpec]}}.
