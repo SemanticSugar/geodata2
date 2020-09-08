@@ -19,17 +19,8 @@ clean:
 	$(REBAR) clean $(REBAR_FLAGS)
 	rm -rf _build
 
-clean_plt:
-	@rm -f _test/dialyzer_plt
-
-build_plt: build-plt
-
-build-plt:
-	@mkdir -p _test
-	$(REBAR) build-plt $(REBAR_FLAGS)
-
 dialyzer:
-	$(REBAR) dialyze $(REBAR_FLAGS)
+	$(REBAR) dialyzer $(REBAR_FLAGS)
 
 format:
 	$(REBAR) format
