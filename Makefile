@@ -1,4 +1,4 @@
-REBAR ?= $(shell which rebar3 2>/dev/null || which rebar 2>/dev/null || which ./rebar)
+REBAR ?= $(shell which rebar3 2>/dev/null)
 REBAR_FLAGS ?=
 
 all: deps compile
