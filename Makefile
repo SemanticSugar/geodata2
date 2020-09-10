@@ -1,4 +1,4 @@
-REBAR ?= $(shell which rebar 2>/dev/null || which ./rebar)
+REBAR ?= $(shell which rebar3 2>/dev/null)
 REBAR_FLAGS ?=
 
 all: deps compile
@@ -17,15 +17,10 @@ test: compile
 
 clean:
 	$(REBAR) clean $(REBAR_FLAGS)
-
-clean_plt:
-	@rm -f _test/dialyzer_plt
-
-build_plt: build-plt
-
-build-plt:
-	@ [ -d _test ] || mkdir _test
-	$(REBAR) build-plt $(REBAR_FLAGS)
+	rm -rf _build
 
 dialyzer:
-	$(REBAR) dialyze $(REBAR_FLAGS)
+	$(REBAR) dialyzer $(REBAR_FLAGS)
+
+format:
+	$(REBAR) format

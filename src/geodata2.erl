@@ -5,7 +5,7 @@
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2]).
 %% API
--export([lookup/1, start/0, start_link/1, stop/0, get_env/2, id/1]).
+-export([lookup/1, start/0, start_link/1, stop/0, get_env/2, id/1, is_ipv6_mmdb/0]).
 
 -include("geodata2.hrl").
 
@@ -45,6 +45,8 @@ new(File) ->
                         RawData
                 end,
             {ok, Meta} = geodata2_format:meta(Data),
+            %% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
+            set_is_ipv6_mmdb(Meta),
             ets:new(?GEODATA2_STATE_TID, [set, protected, named_table, {read_concurrency, true}]),
             ets:insert(?GEODATA2_STATE_TID, {data, Data}),
             ets:insert(?GEODATA2_STATE_TID, {meta, Meta}),
@@ -90,6 +92,14 @@ get_env(App, Key) ->
 %% this is used to return app env values as-is when config_interp is not set:
 id(X) ->
     X.
+
+%% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
+is_ipv6_mmdb() ->
+    application:get_env(geodata2, ipv6, false).
+
+%% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
+set_is_ipv6_mmdb(Meta) ->
+    application:set_env(geodata2, ipv6, geodata2_format:is_ipv6(Meta)).
 
 is_compressed(Filename) ->
     <<".gz">> == iolist_to_binary(filename:extension(Filename)).

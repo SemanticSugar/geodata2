@@ -1,11 +1,14 @@
 ## Erlang OTP application for handling MaxMind(tm) Geoip2 (.mmdb) files.
 
-This is a forked branch of [brigadier/geodata2](https://github.com/brigadier/geodata2), which uses a shared ets table to hold the database state rather than a cluster of workers. This was done to improve performance.
+This is a forked branch of [altenmueller/geodata2](https://github.com/altenmueller/geodata2), which uses a shared `ETS` table to hold the database state rather than a cluster of workers.  
+This was done to improve performance.
 
 #### Features:
-* Supports all types (hopefully) of bases in .mmdb format, both IPv4 and IPv6 ones;
+* Supports all types (hopefully) of bases in .mmdb format, both IPv4 and IPv6 ones.
 * Safe from binary reference leakage, binary parts are getting copied.
-* R18 compatible
+* R18 compatible.
+* OTP22 compatible.
+* Uses rebar3.
 
 
 The app accepts IPs in `{B3:8, B2:8, B1:8, B0:8}`, `{W7:16, W6:16, W5:16, W4:16, W3:16, W2:16, W1:16, W0:16}`, string, binary string, and big-endian dword formats.
