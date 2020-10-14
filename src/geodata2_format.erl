@@ -51,9 +51,8 @@ make_meta(Data, Meta) ->
     Epoch = proplists:get_value(<<"build_epoch">>, Meta),
     Origin = 62167219200, % {{1970,1,1},{0,0,0}}
     Timestamp = calendar:gregorian_seconds_to_datetime(Origin + Epoch),
-    Vsn =
-        {proplists:get_value(<<"binary_format_major_version">>, Meta),
-         proplists:get_value(<<"binary_format_minor_version">>, Meta)},
+    Vsn = {proplists:get_value(<<"binary_format_major_version">>, Meta),
+           proplists:get_value(<<"binary_format_minor_version">>, Meta)},
     true = IPVersion == ?IPV6 orelse IPVersion == ?IPV4,
     true = RecordSize =/= undefined,
     true = NodeCount =/= undefined,
