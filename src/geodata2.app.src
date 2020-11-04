@@ -9,5 +9,6 @@
 		stdlib
 	]},
 	{mod, {geodata2_app, []}},
-    {env, [{dbfile, "priv/GeoLite2-City.mmdb"}]}
+	{env,
+		[{dbfile, "priv/GeoLite2-City.mmdb"}]}
 ]}.

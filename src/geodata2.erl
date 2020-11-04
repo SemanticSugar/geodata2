@@ -74,7 +74,7 @@ init(_Args) ->
            case new(ip_to_domain, ?GEODATA2_DOMAIN_TID) of
                 ok ->
                     {ok, #state{}};
-                Error -> % Second optional
+                _Error -> % Second optional
                     {ok, #state{}}
             end;
         Error -> %% Mandatory	 

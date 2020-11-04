@@ -12,8 +12,11 @@ compile:
 doc:
 	$(REBAR) doc $(REBAR_FLAGS)
 
-test: compile
+test: compile ct
 	$(REBAR) eunit $(REBAR_FLAGS)
+
+ct: compile
+	$(REBAR) ct $(REBAR_FLAGS)
 
 clean:
 	$(REBAR) clean $(REBAR_FLAGS)
