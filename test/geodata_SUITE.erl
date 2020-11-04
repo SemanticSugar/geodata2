@@ -52,11 +52,9 @@ end_per_testcase(_Suite, Config) ->
 %% Test a normal lookup
 lookup(_) ->
     ?assert(fixme_result, geodata2:lookup(<<"1.1.1.1">>)),
-    ?assert(fixme_result, geodata2:lookup_iptodomain(<<"1.1.1.1">>)),
     ok.
 
 %% Test a domain lookup
 domain_lookup(_) ->
-    ?assert(fixme_result, geodata2:lookup(<<"1.1.1.1">>)),
     ?assert(fixme_result, geodata2:lookup_iptodomain(<<"1.1.1.1">>)),
     ok.
