@@ -5,7 +5,7 @@
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2]).
 %% API
--export([lookup/1, start/0, start_link/1, stop/0, get_env/2, id/1]).
+-export([lookup/1, lookup_iptodomain/1, start/0, start_link/1, stop/0, get_env/2, id/1]).
 
 -include("geodata2.hrl").
 
@@ -17,6 +17,16 @@
 lookup(IP) ->
     [{data, Data}] = ets:lookup(?GEODATA2_STATE_TID, data),
     [{meta, Meta}] = ets:lookup(?GEODATA2_STATE_TID, meta),
+    case geodata2_ip:make_ip(IP) of
+      {ok, Bits, IPV} ->
+          geodata2_format:lookup(Meta, Data, Bits, IPV);
+      {error, Reason} ->
+          {error, Reason}
+    end.
+
+lookup_iptodomain(IP) ->
+    [{data, Data}] = ets:lookup(?GEODATA2_DOMAIN_TID, data),
+    [{meta, Meta}] = ets:lookup(?GEODATA2_DOMAIN_TID, meta),
     case geodata2_ip:make_ip(IP) of
       {ok, Bits, IPV} ->
           geodata2_format:lookup(Meta, Data, Bits, IPV);
