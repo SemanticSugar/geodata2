@@ -43,57 +43,43 @@ start_link(Name) ->
 stop() ->
     application:stop(geodata2).
 
-new(MagellanFile, DomainFile) ->
-    MagellanState = case filelib:is_file(MagellanFile) of
-      true ->
-          {ok, RawData} = file:read_file(MagellanFile),
-          Data = case is_compressed(MagellanFile) of
-                   true ->
-                       zlib:gunzip(RawData);
-                   false ->
-                       RawData
-                 end,
-          {ok, Meta} = geodata2_format:meta(Data),
-          ets:new(?GEODATA2_STATE_TID, [set, protected, named_table, {read_concurrency, true}]),
-          ets:insert(?GEODATA2_STATE_TID, {data, Data}),
-          ets:insert(?GEODATA2_STATE_TID, {meta, Meta}),
-          {ok, #state{}};
-      _ ->
-          {stop, {geodata2_dbfile_not_found, MagellanFile}}
-    end,
-    DomainState = case filelib:is_file(DomainFile) of
-      true ->
-          {ok, RawData2} = file:read_file(DomainFile),
-          Data2 = case is_compressed(DomainFile) of
-                   true ->
-                       zlib:gunzip(RawData2);
-                   false ->
-                       RawData2
-                 end,
-          {ok, Meta2} = geodata2_format:meta(Data2),
-          ets:new(?GEODATA2_DOMAIN_TID, [set, protected, named_table, {read_concurrency, true}]),
-          ets:insert(?GEODATA2_DOMAIN_TID, {data, Data2}),
-          ets:insert(?GEODATA2_DOMAIN_TID, {meta, Meta2}),
-          {ok, #state{}};
-      _ ->
-          {stop, {ip_to_domain_dbfile_not_found, DomainFile}}
-    end,
-    {ok, {MagellanState, DomainState}}.
+new(ConfigName, Ets) ->
+    case get_env(geodata2, ConfigName) of
+        {ok, Filename} ->	
+            case filelib:is_file(Filename) of
+                true ->
+                    {ok, RawData} = file:read_file(Filename),
+                    Data = case is_compressed(Filename) of
+                        true ->
+                            zlib:gunzip(RawData);
+                        false ->
+                            RawData
+                    end,
+                    {ok, Meta} = geodata2_format:meta(Data),
+                    ets:new(Ets, [set, protected, named_table, {read_concurrency, true}]),
+                    ets:insert(Ets, {data, Data}),
+                    ets:insert(Ets, {meta, Meta}),
+                    ok;
+                false ->
+                    {stop, {dbfile_not_found, Filename}};
+        _ ->
+            {stop, {geodata2_config_unspecified, ConfigName}}
+        end
+    end.
 
 -spec init(_) -> {ok, state()} | {stop, tuple()}.
 init(_Args) ->
-    MagellanFile = case get_env(geodata2, dbfile) of
-      {ok, File} -> File;
-      _ ->
-          {stop, {geodata2_dbfile_unspecified}}
-    end,
-    DomainFile = case get_env(ip_to_domain, dbfile) of
-      {ok, File2} -> File2;
-      _ ->
-          {stop, {ip_to_domain_dbfile_unspecified}}
-    end,
-    new(MagellanFile, DomainFile).
-
+    case new(dbfile, ?GEODATA2_STATE_TID) of
+        ok ->
+           case new(ip_to_domain, ?GEODATA2_DOMAIN_TID) of
+                ok ->
+                    {ok, #state{}};
+                Error -> % Second optional
+                    {ok, #state{}}
+            end;
+        Error -> %% Mandatory	 
+            Error
+    end.
 
 handle_call(_What, _From, State) ->
     {reply, ok, State}.
