@@ -18,20 +18,20 @@ lookup(IP) ->
     [{data, Data}] = ets:lookup(?GEODATA2_STATE_TID, data),
     [{meta, Meta}] = ets:lookup(?GEODATA2_STATE_TID, meta),
     case geodata2_ip:make_ip(IP) of
-      {ok, Bits, IPV} ->
-          geodata2_format:lookup(Meta, Data, Bits, IPV);
-      {error, Reason} ->
-          {error, Reason}
+        {ok, Bits, IPV} ->
+            geodata2_format:lookup(Meta, Data, Bits, IPV);
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 lookup_iptodomain(IP) ->
     [{data, Data}] = ets:lookup(?GEODATA2_DOMAIN_TID, data),
     [{meta, Meta}] = ets:lookup(?GEODATA2_DOMAIN_TID, meta),
     case geodata2_ip:make_ip(IP) of
-      {ok, Bits, IPV} ->
-          geodata2_format:lookup(Meta, Data, Bits, IPV);
-      {error, Reason} ->
-          {error, Reason}
+        {ok, Bits, IPV} ->
+            geodata2_format:lookup(Meta, Data, Bits, IPV);
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 start() ->
