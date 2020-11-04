@@ -25,14 +25,23 @@ lookup(IP) ->
     end.
 
 lookup_iptodomain(IP) ->
-    [{data, Data}] = ets:lookup(?GEODATA2_DOMAIN_TID, data),
-    [{meta, Meta}] = ets:lookup(?GEODATA2_DOMAIN_TID, meta),
-    case geodata2_ip:make_ip(IP) of
-        {ok, Bits, IPV} ->
-            geodata2_format:lookup(Meta, Data, Bits, IPV);
-        {error, Reason} ->
-            {error, Reason}
+    case ets:lookup(?GEODATA2_DOMAIN_TID, data) of
+        [{data, Data}] ->
+            case ets:lookup(?GEODATA2_DOMAIN_TID, meta) of
+                [{meta, Meta}] ->
+                    case geodata2_ip:make_ip(IP) of
+                        {ok, Bits, IPV} ->
+                            geodata2_format:lookup(Meta, Data, Bits, IPV);
+                        {error, Reason} ->
+                            {error, Reason}
+                    end;
+                [] ->
+                    not_found
+            end;
+        [] ->
+            not_found
     end.
+
 
 start() ->
     application:start(geodata2).
@@ -44,6 +53,7 @@ stop() ->
     application:stop(geodata2).
 
 new(ConfigName, Ets) ->
+    ets:new(Ets, [set, protected, named_table, {read_concurrency, true}]),
     case get_env(geodata2, ConfigName) of
         {ok, Filename} ->	
             case filelib:is_file(Filename) of
@@ -56,7 +66,6 @@ new(ConfigName, Ets) ->
                             RawData
                     end,
                     {ok, Meta} = geodata2_format:meta(Data),
-                    ets:new(Ets, [set, protected, named_table, {read_concurrency, true}]),
                     ets:insert(Ets, {data, Data}),
                     ets:insert(Ets, {meta, Meta}),
                     ok;
