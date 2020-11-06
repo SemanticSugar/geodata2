@@ -39,7 +39,7 @@ init_per_testcase(domain_file_not_found, Config) ->
 init_per_testcase(_Suite, Config) ->
     %% TODO, use smaller test file
     application:load(geodata2),
-    IpToDomain = filename:join(code:priv_dir(geodata2), "ip-to-domain.mmdb.gz"),
+    IpToDomain = filename:join(code:priv_dir(geodata2), "test.mmdb.gz"),
     DBFilePath = filename:join(code:priv_dir(geodata2), "magellan.mmdb.gz"),
     application:set_env(geodata2, ip_to_domain, IpToDomain),
     application:set_env(geodata2, dbfile, DBFilePath),
@@ -58,12 +58,12 @@ end_per_testcase(_Suite, Config) ->
 
 %% Test a normal lookup
 lookup(_) ->
-    ?assertMatch({ok, _Data}, geodata2:lookup(<<"1.1.1.1">>)),
+    ?assertMatch({ok, _Data}, geodata2:lookup(<<"216.58.202.14">>)),
     ok.
 
 %% Test a domain lookup
 domain_lookup(_) ->
-    ?assertEqual(fixme_result, geodata2:lookup_iptodomain(<<"1.1.1.1">>)),
+    ?assertEqual({ok, [{<<"domain">>, <<"google.com">>}]}, geodata2:lookup_iptodomain(<<"216.58.202.0">>)),
     ok.
 
 %% Testing that if we dont setup a domain everything will work as usual anyway
@@ -77,8 +77,7 @@ domain_file_not_found(_) ->
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {ok, _} = application:ensure_all_started(geodata2),
 
-    %% Now a normal lookup working ok
-    ?assertMatch({ok, _Data}, geodata2:lookup(<<"1.1.1.1">>)),
+    %% Now a normal lookup working 
     ?assertEqual(not_found, geodata2:lookup_iptodomain(<<"1.1.1.1">>)),
     %%
     application:stop(geodata2).
