@@ -77,7 +77,7 @@ domain_file_not_found(_) ->
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {ok, _} = application:ensure_all_started(geodata2),
 
-    %% Now a normal lookup working 
+    %% Now a normal not_found lookup working 
     ?assertEqual(not_found, geodata2:lookup_iptodomain(<<"1.1.1.1">>)),
     %%
     application:stop(geodata2).
