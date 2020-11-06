@@ -40,7 +40,7 @@ init_per_testcase(_Suite, Config) ->
     %% TODO, use smaller test file
     application:load(geodata2),
     IpToDomain = filename:join(code:priv_dir(geodata2), "test.mmdb.gz"),
-    DBFilePath = filename:join(code:priv_dir(geodata2), "magellan.mmdb.gz"),
+    DBFilePath = filename:join(code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
     application:set_env(geodata2, ip_to_domain, IpToDomain),
     application:set_env(geodata2, dbfile, DBFilePath),
     ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ip_to_domain)),
@@ -70,7 +70,7 @@ domain_lookup(_) ->
 domain_file_not_found(_) ->
     application:load(geodata2),
     IpToDomain = filename:join(code:priv_dir(geodata2), "notfound.mmdb.gz"),
-    DBFilePath = filename:join(code:priv_dir(geodata2), "magellan.mmdb.gz"),
+    DBFilePath = filename:join(code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
     application:set_env(geodata2, ip_to_domain, IpToDomain),
     application:set_env(geodata2, dbfile, DBFilePath),
     ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ip_to_domain)),
