@@ -66,6 +66,10 @@ new(ConfigName, Ets) ->
                             RawData
                     end,
                     {ok, Meta} = geodata2_format:meta(Data),
+                    if ConfigName =:= dbfile ->
+                        set_is_ipv6_mmdb(Meta);
+                        true -> ok 
+                    end,
                     ets:insert(Ets, {data, Data}),
                     ets:insert(Ets, {meta, Meta}),
                     ok;

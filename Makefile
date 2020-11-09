@@ -12,7 +12,7 @@ compile:
 doc:
 	$(REBAR) doc $(REBAR_FLAGS)
 
-test: compile ct
+test: ct
 	$(REBAR) eunit $(REBAR_FLAGS)
 
 ct: compile
