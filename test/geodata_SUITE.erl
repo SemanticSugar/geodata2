@@ -16,7 +16,8 @@
     domain_file_not_found/1,
     domain_lookup_weird_ip/1,
     domain_lookup_not_found/1,
-    domain_lookup_weird_ip_2/1
+    domain_lookup_weird_ip_2/1,
+    domain_lookup_ip_in_v6_not_allowed/1
 ]).
 
 %%%===================================================================
@@ -30,7 +31,8 @@ all() ->
         domain_file_not_found,
         domain_lookup_weird_ip,
         domain_lookup_not_found,
-        domain_lookup_weird_ip_2
+        domain_lookup_weird_ip_2,
+        domain_lookup_ip_in_v6_not_allowed
     ].
 
 init_per_suite(Config) ->
@@ -82,10 +84,14 @@ domain_lookup_weird_ip_2(_) ->
     ?assertEqual({error,format}, geodata2:lookup_iptodomain(atom_not_allowed_format_error)),
     ok.
 
+%% Test a domain lookup with weird input
+domain_lookup_ip_in_v6_not_allowed(_) ->
+    ?assertEqual({error,v4db}, geodata2:lookup_iptodomain("2001:0db8:85a3:0000:0000:8a2e:0370:7334")),
+    ok.
+
 domain_lookup_not_found(_) ->
     ?assertEqual(not_found, geodata2:lookup_iptodomain(<<"192.168.0.1">>)),
     ok.
-
 
 %% Testing that if we dont setup a domain everything will work as usual anyway
 domain_file_not_found(_) ->
