@@ -1,7 +1,7 @@
 REBAR ?= $(shell which rebar3 2>/dev/null)
 REBAR_FLAGS ?=
 
-.PHONY: deps compile doc test eunit ct clean dialyzer format
+.PHONY: deps compile doc test eunit ct clean dialyzer lint format verify_format
 
 all: deps compile
 
@@ -16,6 +16,9 @@ doc:
 
 test: compile eunit ct
 
+## Run code checks and unit+integration tests
+test_and_verify: verify_format lint dialyzer test
+
 eunit:
 	$(REBAR) eunit --verbose $(REBAR_FLAGS)
 
@@ -27,7 +30,13 @@ clean:
 	rm -rf _build
 
 dialyzer:
-	$(REBAR) dialyzer $(REBAR_FLAGS)
+	$(REBAR) dialyzer $(REBAR_FLAGS) || $(REBAR) dialyzer $(REBAR_FLAGS)
+
+lint:
+	$(REBAR) lint
 
 format:
 	$(REBAR) format
+
+verify_format:
+	$(REBAR) format --verify
