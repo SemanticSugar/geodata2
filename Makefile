@@ -1,6 +1,8 @@
 REBAR ?= $(shell which rebar3 2>/dev/null)
 REBAR_FLAGS ?=
 
+.PHONY: deps compile doc test eunit ct clean dialyzer format
+
 all: deps compile
 
 deps:
@@ -12,11 +14,13 @@ compile:
 doc:
 	$(REBAR) doc $(REBAR_FLAGS)
 
-test: ct
-	$(REBAR) eunit $(REBAR_FLAGS)
+test: compile eunit ct
 
-ct: compile
-	$(REBAR) ct $(REBAR_FLAGS)
+eunit:
+	$(REBAR) eunit --verbose $(REBAR_FLAGS)
+
+ct:
+	$(REBAR) ct --verbose $(REBAR_FLAGS)
 
 clean:
 	$(REBAR) clean $(REBAR_FLAGS)
