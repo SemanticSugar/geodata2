@@ -6,7 +6,8 @@ REBAR_FLAGS ?=
 all: deps compile
 
 deps:
-	$(REBAR) get-deps $(REBAR_FLAGS)
+	@$(REBAR) unlock
+	@$(REBAR) upgrade
 
 compile:
 	$(REBAR) compile $(REBAR_FLAGS)
