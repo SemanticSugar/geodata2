@@ -5,7 +5,8 @@
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2]).
 %% API
--export([lookup/1, lookup_iptodomain/1, start/0, start_link/1, stop/0, get_env/2, id/1, is_ipv6_mmdb/0]).
+-export([lookup/1, lookup_iptodomain/1, start/0, start_link/1, stop/0, get_env/2, id/1,
+         is_ipv6_mmdb/0]).
 
 -include("geodata2.hrl").
 
@@ -42,7 +43,6 @@ lookup_iptodomain(IP) ->
             not_found
     end.
 
-
 start() ->
     application:start(geodata2).
 
@@ -55,43 +55,45 @@ stop() ->
 new(ConfigName, Ets) ->
     ets:new(Ets, [set, protected, named_table, {read_concurrency, true}]),
     case get_env(geodata2, ConfigName) of
-        {ok, Filename} ->	
+        {ok, Filename} ->
             case filelib:is_file(Filename) of
                 true ->
                     {ok, RawData} = file:read_file(Filename),
-                    Data = case is_compressed(Filename) of
-                        true ->
-                            zlib:gunzip(RawData);
-                        false ->
-                            RawData
-                    end,
+                    Data =
+                        case is_compressed(Filename) of
+                            true ->
+                                zlib:gunzip(RawData);
+                            false ->
+                                RawData
+                        end,
                     {ok, Meta} = geodata2_format:meta(Data),
                     if ConfigName =:= dbfile ->
-                        %% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
-                        set_is_ipv6_mmdb(Meta);
-                        true -> ok 
+                           %% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
+                           set_is_ipv6_mmdb(Meta);
+                       true ->
+                           ok
                     end,
                     ets:insert(Ets, {data, Data}),
                     ets:insert(Ets, {meta, Meta}),
                     ok;
                 false ->
                     {stop, {dbfile_not_found, Filename}};
-        _ ->
-            {stop, {geodata2_config_unspecified, ConfigName}}
-        end
+                _ ->
+                    {stop, {geodata2_config_unspecified, ConfigName}}
+            end
     end.
 
 -spec init(_) -> {ok, state()} | {stop, tuple()}.
 init(_Args) ->
     case new(dbfile, ?GEODATA2_STATE_TID) of
         ok ->
-           case new(ip_to_domain, ?GEODATA2_DOMAIN_TID) of
+            case new(ip_to_domain, ?GEODATA2_DOMAIN_TID) of
                 ok ->
                     {ok, #state{}};
                 _Error -> % Second optional
                     {ok, #state{}}
             end;
-        Error -> %% Mandatory	 
+        Error -> %% Mandatory
             Error
     end.
 
@@ -106,17 +108,18 @@ handle_cast(_Request, State) ->
 %%%===================================================================
 
 get_env(App, Key) ->
-    {ConfigModule, ConfigFun} = case application:get_env(geodata2, config_interp) of
-                                  {ok, {Cm, Cf}} ->
-                                      {Cm, Cf};
-                                  _ ->
-                                      {?MODULE, id}
-                                end,
+    {ConfigModule, ConfigFun} =
+        case application:get_env(geodata2, config_interp) of
+            {ok, {Cm, Cf}} ->
+                {Cm, Cf};
+            _ ->
+                {?MODULE, id}
+        end,
     case application:get_env(App, Key) of
-      {ok, Value} ->
-          {ok, ConfigModule:ConfigFun(Value)};
-      Other ->
-          Other
+        {ok, Value} ->
+            {ok, ConfigModule:ConfigFun(Value)};
+        Other ->
+            Other
     end.
 
 %% this is used to return app env values as-is when config_interp is not set:

@@ -21,7 +21,6 @@
          data_start,
          v4_start}).
 -record(geocity, {country, city, city_geoid, long, lat}).
-
 -record(geocity_domain, {domain}).
 
 -type geocity() :: #geocity{}.
