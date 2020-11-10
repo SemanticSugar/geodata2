@@ -17,7 +17,8 @@
     domain_lookup_weird_ip/1,
     domain_lookup_not_found/1,
     domain_lookup_weird_ip_2/1,
-    domain_lookup_ip_in_v6_not_allowed/1
+    domain_lookup_ip_in_v6_not_allowed/1,
+    domain_lookup_invalid_ip_with_port/1
 ]).
 
 %%%===================================================================
@@ -32,7 +33,8 @@ all() ->
         domain_lookup_weird_ip,
         domain_lookup_not_found,
         domain_lookup_weird_ip_2,
-        domain_lookup_ip_in_v6_not_allowed
+        domain_lookup_ip_in_v6_not_allowed,
+        domain_lookup_invalid_ip_with_port
     ].
 
 init_per_suite(Config) ->
@@ -91,6 +93,10 @@ domain_lookup_ip_in_v6_not_allowed(_) ->
 
 domain_lookup_not_found(_) ->
     ?assertEqual(not_found, geodata2:lookup_iptodomain(<<"192.168.0.1">>)),
+    ok.
+
+domain_lookup_invalid_ip_with_port(_) ->
+    ?assertEqual({error, einval}, geodata2:lookup_iptodomain(<<"192.168.0.1:8080">>)),
     ok.
 
 %% Testing that if we dont setup a domain everything will work as usual anyway
