@@ -7,7 +7,7 @@
          end_per_testcase/2]).
 %% Export here the tests
 -export([lookup/1, domain_lookup/1, no_file_is_found/1, domain_file_not_found/1,
-         domain_lookup_weird_ip/1, domain_lookup_not_found/1, domain_lookup_weird_ip_2/1,
+         domain_lookup_weird_ip/1, domain_lookup_not_found/1, domain_lookup_format_not_allowed/1,
          domain_lookup_ip_in_v6_not_allowed/1, domain_lookup_invalid_ip_with_port/1]).
 
 %%%===================================================================
@@ -20,7 +20,7 @@ all() ->
      domain_file_not_found,
      domain_lookup_weird_ip,
      domain_lookup_not_found,
-     domain_lookup_weird_ip_2,
+     domain_lookup_format_not_allowed,
      domain_lookup_ip_in_v6_not_allowed,
      domain_lookup_invalid_ip_with_port].
 
@@ -60,7 +60,7 @@ end_per_testcase(_Suite, Config) ->
 
 %% Test a normal lookup
 lookup(_) ->
-    ?assertMatch({ok, _Data}, geodata2:lookup(<<"216.58.202.14">>)),
+    ?assertMatch({ok, _}, geodata2:lookup(<<"216.58.202.14">>)),
     ok.
 
 %% Test a domain lookup
@@ -74,8 +74,7 @@ domain_lookup_weird_ip(_) ->
     ?assertEqual(not_found, geodata2:lookup_iptodomain(<<"0.0">>)),
     ok.
 
-%% Test a domain lookup with weird input
-domain_lookup_weird_ip_2(_) ->
+domain_lookup_format_not_allowed(_) ->
     ?assertEqual({error, format}, geodata2:lookup_iptodomain(atom_not_allowed_format_error)),
     ok.
 
