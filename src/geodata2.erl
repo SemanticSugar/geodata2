@@ -68,16 +68,16 @@ new(ConfigName, Ets) ->
                         end,
                     {ok, Meta} = geodata2_format:meta(Data),
                     case ConfigName of
-                        dbfile -> set_is_ipv6_mmdb(Meta);
-                        _ -> ok
+                        dbfile ->
+                            set_is_ipv6_mmdb(Meta);
+                        _ ->
+                            ok
                     end,
                     ets:insert(Ets, {data, Data}),
                     ets:insert(Ets, {meta, Meta}),
                     ok;
                 false ->
-                    {stop, {dbfile_not_found, Filename}};
-                _ ->
-                    {stop, {geodata2_config_unspecified, ConfigName}}
+                    {stop, {dbfile_not_found, Filename}}
             end
     end.
 
