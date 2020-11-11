@@ -71,12 +71,6 @@ new(ConfigName, Ets) ->
                         dbfile -> set_is_ipv6_mmdb(Meta);
                         _ -> ok
                     end,
-                    if ConfigName =:= dbfile ->
-                           %% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
-                           set_is_ipv6_mmdb(Meta);
-                       true ->
-                           ok
-                    end,
                     ets:insert(Ets, {data, Data}),
                     ets:insert(Ets, {meta, Meta}),
                     ok;
