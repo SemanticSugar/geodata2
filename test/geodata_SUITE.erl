@@ -129,16 +129,17 @@ no_file_is_found(_) ->
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {error, _} = application:ensure_all_started(geodata2).
 
-%% Testing that if we dont setup a domain everything will work as usual anyway
+%% Testing that if we dont setup the files everything will work as usual
 domain_not_in_config_should_start(_) ->
-    application:load(geodata2),
-    DBFilePath =
-        filename:join(
-            code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
+    % DBFilePath =
+    %     filename:join(
+    %         code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
     application:unset_env(geodata2, ip_to_domain),
-    application:set_env(geodata2, dbfile, DBFilePath),
-    ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
+    % application:set_env(geodata2, dbfile, DBFilePath),
+    application:unset_env(geodata2, dbfile),
+    ?assertEqual(undefined, geodata2:get_env(geodata2, dbfile)),
     ?assertEqual(undefined, geodata2:get_env(geodata2, ip_to_domain)),
+    application:load(geodata2),
     {ok, _} = application:ensure_all_started(geodata2),
 
     %% Now a normal not_found lookup working

@@ -78,7 +78,10 @@ new(ConfigName, Ets) ->
                     ok;
                 false ->
                     {stop, {dbfile_not_found, Filename}}
-            end
+            end;
+        Other ->
+            %% config not set
+            Other
     end.
 
 -spec init(_) -> {ok, state()} | {stop, tuple()}.
@@ -91,7 +94,7 @@ init(_Args) ->
                 _Error -> % Second optional
                     {ok, #state{}}
             end;
-        Error -> %% Mandatory
+        Error -> %% This config is mandatory
             Error
     end.
 
