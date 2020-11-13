@@ -138,7 +138,7 @@ domain_not_in_config_should_start(_) ->
     application:unset_env(geodata2, ip_to_domain),
     application:set_env(geodata2, dbfile, DBFilePath),
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
-    ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, ip_to_domain)),
+    ?assertEqual(undefined, geodata2:get_env(geodata2, ip_to_domain)),
     {ok, _} = application:ensure_all_started(geodata2),
 
     %% Now a normal not_found lookup working
