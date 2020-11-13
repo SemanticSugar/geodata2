@@ -8,7 +8,8 @@
 %% Export here the tests
 -export([lookup/1, domain_lookup/1, no_file_is_found/1, domain_file_not_found/1,
          domain_lookup_weird_ip/1, domain_lookup_not_found/1, domain_lookup_format_not_allowed/1,
-         domain_lookup_ip_in_v6_not_allowed/1, domain_lookup_invalid_ip_with_port/1]).
+         domain_lookup_ip_in_v6_not_allowed/1, domain_lookup_invalid_ip_with_port/1,
+         domain_not_in_config_should_start/1]).
 
 %%%===================================================================
 %%% CT callbacks
@@ -22,7 +23,8 @@ all() ->
      domain_lookup_not_found,
      domain_lookup_format_not_allowed,
      domain_lookup_ip_in_v6_not_allowed,
-     domain_lookup_invalid_ip_with_port].
+     domain_lookup_invalid_ip_with_port,
+     domain_not_in_config_should_start].
 
 init_per_suite(Config) ->
     Config.
@@ -126,3 +128,20 @@ no_file_is_found(_) ->
     ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ip_to_domain)),
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {error, _} = application:ensure_all_started(geodata2).
+
+%% Testing that if we dont setup a domain everything will work as usual anyway
+domain_not_in_config_should_start(_) ->
+    application:load(geodata2),
+    DBFilePath =
+        filename:join(
+            code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
+    application:unset_env(geodata2, ip_to_domain),
+    application:set_env(geodata2, dbfile, DBFilePath),
+    ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
+    ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, ip_to_domain)),
+    {ok, _} = application:ensure_all_started(geodata2),
+
+    %% Now a normal not_found lookup working
+    ?assertEqual(not_found, geodata2:lookup_iptodomain(<<"1.1.1.1">>)),
+    %%
+    application:stop(geodata2).
