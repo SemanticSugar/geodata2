@@ -4,6 +4,7 @@
 -define(IPV6, 6).
 -define(IPV4, 4).
 -define(GEODATA2_STATE_TID, geodata2_state).
+-define(GEODATA2_DOMAIN_TID, geodata2_domain).
 
 -record(meta,
         {descr,
@@ -20,5 +21,6 @@
          data_start,
          v4_start}).
 -record(geocity, {country, city, city_geoid, long, lat}).
+-record(geocity_domain, {domain}).
 
 -type geocity() :: #geocity{}.
