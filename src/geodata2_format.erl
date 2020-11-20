@@ -121,9 +121,8 @@ lookup(_,
        _) -> %%lookup v6 in v4 db
     {error, v4db}.
 
-lookup_pos(#meta{node_count = NodeCount}, _, <<>>, Pos)
-    when Pos <
-             NodeCount -> %% can't happen in the real db, gets used for lookup of v4 tree start
+%% can't happen in the real db, gets used for lookup of v4 tree start
+lookup_pos(#meta{node_count = NodeCount}, _, <<>>, Pos) when Pos < NodeCount ->
     {error, {partial, Pos}};
 lookup_pos(#meta{node_count = NodeCount,
                  record_size = RecordSize,
