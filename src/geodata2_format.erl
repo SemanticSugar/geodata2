@@ -1,6 +1,19 @@
 -module(geodata2_format).
 
--include("geodata2.hrl").
+-record(meta,
+        {descr,
+         database_type,
+         languages,
+         timestamp,
+         ip_version,
+         record_size,
+         node_count,
+         vsn,
+         whole,
+         remdr,
+         tree_size,
+         data_start,
+         v4_start}).
 
 -define(GEO_EXTENDED, 0).
 -define(GEO_POINTER, 1).
@@ -53,7 +66,7 @@ make_meta(Data, Meta) ->
     Timestamp = calendar:gregorian_seconds_to_datetime(Origin + Epoch),
     Vsn = {proplists:get_value(<<"binary_format_major_version">>, Meta),
            proplists:get_value(<<"binary_format_minor_version">>, Meta)},
-    true = IPVersion == ?IPV6 orelse IPVersion == ?IPV4,
+    true = IPVersion == 6 orelse IPVersion == 4,
     true = RecordSize =/= undefined,
     true = NodeCount =/= undefined,
     true = DBType =/= undefined,
@@ -91,15 +104,15 @@ read_meta(Data, Pos) ->
 %% optimization for ipv4 lookups in ipv6 database
 %% - begin search for IPV4s from the position of ::ffff:0:0/96 in the tree,
 %%   saves 96 movements on each lookup
-v4_tree_start(_Data, #meta{ip_version = ?IPV4}) ->
+v4_tree_start(_Data, #meta{ip_version = 4}) ->
     0;
-v4_tree_start(Data, #meta{ip_version = ?IPV6} = Meta) ->
+v4_tree_start(Data, #meta{ip_version = 6} = Meta) ->
     Bits = <<0:80, 16#FFFF:16>>,
-    {error, {partial, Pos}} = lookup(Meta, Data, Bits, ?IPV6),
+    {error, {partial, Pos}} = lookup(Meta, Data, Bits, 6),
     Pos.
 
 %% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
-is_ipv6(#meta{ip_version = ?IPV6}) ->
+is_ipv6(#meta{ip_version = 6}) ->
     true;
 is_ipv6(_) ->
     false.
@@ -109,10 +122,10 @@ lookup(#meta{ip_version = V} = Meta,
        Bits,
        V) -> %%same version of IPs
     lookup_pos(Meta, Data, Bits, 0);
-lookup(#meta{ip_version = ?IPV6, v4_start = V4Start} = Meta,
+lookup(#meta{ip_version = 6, v4_start = V4Start} = Meta,
        Data,
        Bits,
-       ?IPV4) -> %%lookup v4 in v6 db
+       6) -> %%lookup v4 in v6 db
     lookup_pos(Meta, Data, Bits, V4Start);
 %% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
 lookup(_,
@@ -192,10 +205,10 @@ parse_ptr({_, Data} = MD, Offset) ->
 
 parse_sz(_MD, ?GEO_UTF, Size, Segment) ->
     <<Str:Size/binary, Rest/binary>> = Segment,
-    {?BINARY_COPY(Str), Rest};
+    {Str, Rest};
 parse_sz(_MD, ?GEO_BYTES, Size, Segment) ->
     <<Bytes:Size/binary, Rest/binary>> = Segment,
-    {?BINARY_COPY(Bytes), Rest};
+    {Bytes, Rest};
 parse_sz(_MD, Type, Bytes, Segment)
     when Type == ?GEO_UINT16;
          Type == ?GEO_UINT32;
@@ -212,7 +225,7 @@ parse_sz(MD, ?EX_GEO_ARRAY, Size, Segment) ->
     parse_array(MD, Segment, Size, []);
 parse_sz(_MD, ?EX_GEO_DATACACHE, Size, Segment) ->
     <<Cache:Size/binary, Rest/binary>> = Segment,
-    {?BINARY_COPY(Cache), Rest};
+    {Cache, Rest};
 parse_sz(_MD, ?EX_GEO_FLOAT, 4, Segment) ->
     <<Val:32/float, Rest/binary>> = Segment,
     {Val, Rest};

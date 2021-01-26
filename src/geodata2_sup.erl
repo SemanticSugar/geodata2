@@ -7,8 +7,6 @@
 %% supervisor behavior
 -export([init/1]).
 
--include("geodata2.hrl").
-
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
