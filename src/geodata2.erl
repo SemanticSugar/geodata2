@@ -8,7 +8,8 @@
 -export([lookup/1, lookup_iptodomain/1, start/0, start_link/1, stop/0, get_env/2, id/1,
          is_ipv6_mmdb/0]).
 
--include("geodata2.hrl").
+-define(GEODATA2_STATE_TID, geodata2_state).
+-define(GEODATA2_DOMAIN_TID, geodata2_domain).
 
 -record(state, {}).
 
