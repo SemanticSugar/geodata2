@@ -1,7 +1,7 @@
 {
   "repository": "git@github.com:SemanticSugar/geodata2",
-  "default_branch": "master",
-  "branch_configuration": "master",
+  "default_branch": "main",
+  "branch_configuration": "main",
   "provider": {
     "id": "github",
     "webhook_url": "https://webhook.buildkite.com/deliver/98f768bb10287aa5e7b1c708d6bc637fd1b92de810d9706612",
