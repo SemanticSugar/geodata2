@@ -1,6 +1,6 @@
 -module(geodata2).
 
--behavior(gen_server).
+-behaviour(gen_server).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2]).
