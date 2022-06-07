@@ -24,10 +24,11 @@ make_ip(IP) when is_integer(IP) ->
 make_ip(IP) when is_binary(IP) ->
     make_ip(binary_to_list(IP));
 make_ip(IP) when is_list(IP) ->
-    case catch address_fast(IP, 0, 24) of
-        N when is_integer(N) ->
-            make_ip(N);
-        _ ->
+    try address_fast(IP, 0, 24) of
+        N ->
+            make_ip(N)
+    catch
+        _:_ ->
             case inet_parse:address(IP) of
                 {ok, Tuple} ->
                     make_ip(Tuple);
