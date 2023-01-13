@@ -198,12 +198,12 @@ parse(MD, <<Type:3, 30:5, Sz1:16, Segment/binary>>) ->
 parse(MD, <<Type:3, 31:5, Sz1:24, Segment/binary>>) ->
     parse_sz(MD, Type, Sz1 + 65821, Segment).
 
-parse_ptr({_, Data} = MD, Offset) ->
+parse_ptr({_, <<Data/binary>>} = MD, Offset) ->
     <<_:Offset/binary, Segment/binary>> = Data,
     {Result, _} = parse(MD, Segment),
     Result.
 
-parse_sz(_MD, ?GEO_UTF, Size, Segment) ->
+parse_sz(_MD, ?GEO_UTF, Size, <<Segment/binary>>) ->
     <<Str:Size/binary, Rest/binary>> = Segment,
     {Str, Rest};
 parse_sz(_MD, ?GEO_BYTES, Size, Segment) ->
@@ -216,35 +216,35 @@ parse_sz(_MD, Type, Bytes, Segment)
          Type == ?GEO_UINT128 ->
     <<Val:Bytes/unsigned-integer-unit:8, Rest/binary>> = Segment,
     {Val, Rest};
-parse_sz(_MD, ?GEO_SIGNEDINT32, Bytes, Segment) ->
+parse_sz(_MD, ?GEO_SIGNEDINT32, Bytes, <<Segment/binary>>) ->
     <<Val:Bytes/signed-integer-unit:8, Rest/binary>> = Segment,
     {Val, Rest};
-parse_sz(MD, ?GEO_MAP, Size, Segment) ->
+parse_sz(MD, ?GEO_MAP, Size, <<Segment/binary>>) ->
     parse_map(MD, Segment, Size, []);
-parse_sz(MD, ?EX_GEO_ARRAY, Size, Segment) ->
+parse_sz(MD, ?EX_GEO_ARRAY, Size, <<Segment/binary>>) ->
     parse_array(MD, Segment, Size, []);
-parse_sz(_MD, ?EX_GEO_DATACACHE, Size, Segment) ->
+parse_sz(_MD, ?EX_GEO_DATACACHE, Size, <<Segment/binary>>) ->
     <<Cache:Size/binary, Rest/binary>> = Segment,
     {Cache, Rest};
-parse_sz(_MD, ?EX_GEO_FLOAT, 4, Segment) ->
+parse_sz(_MD, ?EX_GEO_FLOAT, 4, <<Segment/binary>>) ->
     <<Val:32/float, Rest/binary>> = Segment,
     {Val, Rest};
-parse_sz(_MD, ?EX_GEO_END, 0, Segment) ->
+parse_sz(_MD, ?EX_GEO_END, 0, <<Segment/binary>>) ->
     {eos, Segment};
-parse_sz(_MD, ?EX_GEO_BOOL, 1, Segment) ->
+parse_sz(_MD, ?EX_GEO_BOOL, 1, <<Segment/binary>>) ->
     {true, Segment};
-parse_sz(_MD, ?EX_GEO_BOOL, 0, Segment) ->
+parse_sz(_MD, ?EX_GEO_BOOL, 0, <<Segment/binary>>) ->
     {false, Segment}.
 
-parse_array(_MD, Segment, 0, Acc) ->
+parse_array(_MD, <<Segment/binary>>, 0, Acc) ->
     {lists:reverse(Acc), Segment};
-parse_array(MD, Segment, N, Acc) ->
+parse_array(MD, <<Segment/binary>>, N, Acc) ->
     {Elem, Rest} = parse(MD, Segment),
     parse_array(MD, Rest, N - 1, [Elem | Acc]).
 
-parse_map(_MD, Segment, 0, Acc) ->
+parse_map(_MD, <<Segment/binary>>, 0, Acc) ->
     {Acc, Segment};
-parse_map(MD, Segment, N, Acc) ->
+parse_map(MD, <<Segment/binary>>, N, Acc) ->
     {Key, Rest1} = parse(MD, Segment),
     {Val, Rest2} = parse(MD, Rest1),
     parse_map(MD, Rest2, N - 1, [{Key, Val} | Acc]).
