@@ -80,9 +80,8 @@ new(ConfigName, Ets) ->
                 false ->
                     {stop, {dbfile_not_found, Filename}}
             end;
-        Other ->
-            %% config not set
-            Other
+        undefined ->
+            {stop, {config_not_set, ConfigName}}
     end.
 
 -spec init(_) -> {ok, state()} | {stop, tuple()}.
