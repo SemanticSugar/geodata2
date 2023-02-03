@@ -120,8 +120,8 @@ get_env(App, Key) ->
     case application:get_env(App, Key) of
         {ok, Value} ->
             {ok, ConfigModule:ConfigFun(Value)};
-        Other ->
-            Other
+        undefined ->
+            undefined
     end.
 
 %% this is used to return app env values as-is when config_interp is not set:
