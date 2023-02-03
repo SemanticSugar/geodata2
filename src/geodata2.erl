@@ -80,9 +80,8 @@ new(ConfigName, Ets) ->
                 false ->
                     {stop, {dbfile_not_found, Filename}}
             end;
-        Other ->
-            %% config not set
-            Other
+        undefined ->
+            {stop, {config_not_set, ConfigName}}
     end.
 
 -spec init(_) -> {ok, state()} | {stop, tuple()}.
@@ -120,8 +119,8 @@ get_env(App, Key) ->
     case application:get_env(App, Key) of
         {ok, Value} ->
             {ok, ConfigModule:ConfigFun(Value)};
-        Other ->
-            Other
+        undefined ->
+            undefined
     end.
 
 %% this is used to return app env values as-is when config_interp is not set:
