@@ -3,8 +3,21 @@
 %% API
 -export([make_ip/1]).
 
--spec make_ip(term()) -> {ok, binary(), IPVersion} | {error, format}
-    when IPVersion :: 4 | 6.
+-spec make_ip(MaybeIP) -> {ok, binary(), IPVersion} | {error, format}
+    when IPVersion :: 4 | 6,
+         MaybeIP ::
+             {non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()} |
+             non_neg_integer() |
+             {non_neg_integer(),
+              non_neg_integer(),
+              non_neg_integer(),
+              non_neg_integer(),
+              non_neg_integer(),
+              non_neg_integer(),
+              non_neg_integer(),
+              non_neg_integer()} |
+             binary() |
+             string().
 make_ip({B3, B2, B1, B0})
     when is_integer(B0), is_integer(B1), is_integer(B2), is_integer(B3),
          B0 >= 0 andalso B0 =< 255, B1 >= 0 andalso B1 =< 255, B2 >= 0 andalso B2 =< 255,
@@ -39,33 +52,17 @@ make_ip(IP) when is_list(IP) ->
 make_ip(_) ->
     {error, format}.
 
-address_fast([N2, N1, N0, $. | Rest], Num, Shift) when Shift >= 8 ->
-    case list_to_integer([N2, N1, N0]) of
-        N when N =< 255 ->
-            address_fast(Rest, Num bor (N bsl Shift), Shift - 8)
-    end;
-address_fast([N1, N0, $. | Rest], Num, Shift) when Shift >= 8 ->
-    case list_to_integer([N1, N0]) of
-        N when N =< 255 ->
-            address_fast(Rest, Num bor (N bsl Shift), Shift - 8)
-    end;
-address_fast([N0, $. | Rest], Num, Shift) when Shift >= 8 ->
-    case N0 - $0 of
-        N when N =< 255 ->
-            address_fast(Rest, Num bor (N bsl Shift), Shift - 8)
-    end;
-address_fast(L = [_N2, _N1, _N0], Num, 0) ->
-    case list_to_integer(L) of
-        N when N =< 255 ->
-            Num bor N
-    end;
-address_fast(L = [_N1, _N0], Num, 0) ->
-    case list_to_integer(L) of
-        N when N =< 255 ->
-            Num bor N
-    end;
-address_fast([N0], Num, 0) ->
-    case N0 - $0 of
-        N when N =< 255 ->
-            Num bor N
-    end.
+address_fast([N2, N1, N0, $. | Rest], Num, Shift)
+    when Shift >= 8, "000" =< [N2, N1, N0], [N2, N1, N0] =< "255" ->
+    address_fast(Rest, Num bor (list_to_integer([N2, N1, N0]) bsl Shift), Shift - 8);
+address_fast([N1, N0, $. | Rest], Num, Shift)
+    when Shift >= 8, "00" =< [N1, N0], [N1, N0] =< "99" ->
+    address_fast(Rest, Num bor (list_to_integer([N1, N0]) bsl Shift), Shift - 8);
+address_fast([N0, $. | Rest], Num, Shift) when Shift >= 8, $0 =< N0, N0 =< $9 ->
+    address_fast(Rest, Num bor (N0 - $0 bsl Shift), Shift - 8);
+address_fast([_N2, _N1, _N0] = L, Num, 0) when "000" =< L, L =< "255" ->
+    Num bor list_to_integer(L);
+address_fast([_N1, _N0] = L, Num, 0) when "00" =< L, L =< "99" ->
+    Num bor list_to_integer(L);
+address_fast([N0], Num, 0) when $0 =< N0, N0 =< $9 ->
+    Num bor (N0 - $0).
