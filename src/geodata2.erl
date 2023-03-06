@@ -1,5 +1,8 @@
 -module(geodata2).
 
+%% @todo Remove once https://github.com/inaka/elvis_core/issues/308 is dealt with
+-elvis([{elvis_style, export_used_types, disable}]).
+
 -behaviour(gen_server).
 
 %% gen_server callbacks
