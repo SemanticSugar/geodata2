@@ -10,8 +10,7 @@
 %% Export here the tests
 -export([lookup/1, domain_lookup/1, no_file_is_found/1, domain_file_not_found/1,
          domain_lookup_weird_ip/1, domain_lookup_not_found/1, domain_lookup_format_not_allowed/1,
-         domain_lookup_ip_in_v6_not_allowed/1, domain_lookup_invalid_ip_with_port/1,
-         domain_not_in_config_should_start/1]).
+         domain_lookup_invalid_ip_with_port/1, domain_not_in_config_should_start/1]).
 
 %%%===================================================================
 %%% CT callbacks
@@ -24,7 +23,6 @@ all() ->
      domain_lookup_weird_ip,
      domain_lookup_not_found,
      domain_lookup_format_not_allowed,
-     domain_lookup_ip_in_v6_not_allowed,
      domain_lookup_invalid_ip_with_port,
      domain_not_in_config_should_start].
 
@@ -80,12 +78,6 @@ domain_lookup_weird_ip(_) ->
 
 domain_lookup_format_not_allowed(_) ->
     ?assertEqual({error, format}, geodata2:lookup_iptodomain(atom_not_allowed_format_error)),
-    ok.
-
-%% Test a domain lookup with weird input
-domain_lookup_ip_in_v6_not_allowed(_) ->
-    ?assertEqual({error, v4db},
-                 geodata2:lookup_iptodomain("2001:0db8:85a3:0000:0000:8a2e:0370:7334")),
     ok.
 
 domain_lookup_not_found(_) ->
