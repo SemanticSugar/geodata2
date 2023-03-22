@@ -33,7 +33,7 @@
 -define(EX_GEO_FLOAT, 15).
 
 %% API
--export([parse/2, unpack/2, meta/1, lookup/4, is_ipv6/1]).
+-export([parse/2, unpack/2, meta/1, lookup/4]).
 
 meta(Data) ->
     Size = byte_size(Data),
@@ -111,12 +111,6 @@ v4_tree_start(Data, #meta{ip_version = 6} = Meta) ->
     {error, {partial, Pos}} = lookup(Meta, Data, Bits, 6),
     Pos.
 
-%% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
-is_ipv6(#meta{ip_version = 6}) ->
-    true;
-is_ipv6(_) ->
-    false.
-
 lookup(#meta{ip_version = V} = Meta,
        Data,
        Bits,
@@ -126,13 +120,7 @@ lookup(#meta{ip_version = 6, v4_start = V4Start} = Meta,
        Data,
        Bits,
        4) -> %%lookup v4 in v6 db
-    lookup_pos(Meta, Data, Bits, V4Start);
-%% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
-lookup(_,
-       _,
-       _,
-       _) -> %%lookup v6 in v4 db
-    {error, v4db}.
+    lookup_pos(Meta, Data, Bits, V4Start).
 
 %% can't happen in the real db, gets used for lookup of v4 tree start
 lookup_pos(#meta{node_count = NodeCount}, _, <<>>, Pos) when Pos < NodeCount ->

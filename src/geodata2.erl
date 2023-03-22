@@ -8,8 +8,7 @@
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2]).
 %% API
--export([lookup/1, lookup_iptodomain/1, start/0, start_link/1, stop/0, get_env/2, id/1,
-         is_ipv6_mmdb/0]).
+-export([lookup/1, lookup_iptodomain/1, start/0, start_link/1, stop/0, get_env/2, id/1]).
 
 -define(GEODATA2_STATE_TID, geodata2_state).
 -define(GEODATA2_DOMAIN_TID, geodata2_domain).
@@ -71,12 +70,6 @@ new(ConfigName, Ets) ->
                                 RawData
                         end,
                     {ok, Meta} = geodata2_format:meta(Data),
-                    case ConfigName of
-                        dbfile ->
-                            set_is_ipv6_mmdb(Meta);
-                        _ ->
-                            ok
-                    end,
                     ets:insert(Ets, {data, Data}),
                     ets:insert(Ets, {meta, Meta}),
                     ok;
@@ -132,11 +125,3 @@ id(X) ->
 
 is_compressed(Filename) ->
     <<".gz">> == iolist_to_binary(filename:extension(Filename)).
-
-%% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
-is_ipv6_mmdb() ->
-    application:get_env(geodata2, ipv6, false).
-
-%% @TODO [RTI-8302] This one could be removed after the IPv4+IPv6 MMDB is definitely used
-set_is_ipv6_mmdb(Meta) ->
-    application:set_env(geodata2, ipv6, geodata2_format:is_ipv6(Meta)).
