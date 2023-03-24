@@ -120,7 +120,12 @@ lookup(#meta{ip_version = 6, v4_start = V4Start} = Meta,
        Data,
        Bits,
        4) -> %%lookup v4 in v6 db
-    lookup_pos(Meta, Data, Bits, V4Start).
+    lookup_pos(Meta, Data, Bits, V4Start);
+lookup(_,
+       _,
+       _,
+       _) -> %%lookup v6 in v4 db
+    {error, v4db}.
 
 %% can't happen in the real db, gets used for lookup of v4 tree start
 lookup_pos(#meta{node_count = NodeCount}, _, <<>>, Pos) when Pos < NodeCount ->
