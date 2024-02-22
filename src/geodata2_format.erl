@@ -108,8 +108,13 @@ v4_tree_start(_Data, #meta{ip_version = 4}) ->
     0;
 v4_tree_start(Data, #meta{ip_version = 6} = Meta) ->
     Bits = <<0:80, 16#FFFF:16>>,
-    {error, {partial, Pos}} = lookup(Meta, Data, Bits, 6),
-    Pos.
+    case lookup(Meta, Data, Bits, 6) of
+        {error, {partial, Pos}} ->
+            Pos;
+        not_found ->
+            %% this only happens if the IPv6 database doesn't map any IPv4 addresses
+            none
+    end.
 
 lookup(#meta{ip_version = V} = Meta,
        Data,
