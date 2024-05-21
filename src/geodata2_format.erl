@@ -39,7 +39,7 @@ meta(Data) ->
     Size = byte_size(Data),
     {ok, RawMeta} = read_meta(Data, Size - 14),
     %%'undefined' is safe as there are no pointers in meta
-    {ok, Meta} = geodata2_format:unpack(undefined, RawMeta),
+    {ok, Meta} = unpack(undefined, RawMeta),
     make_meta(Data, Meta).
 
 make_meta(Data, Meta) ->
@@ -112,8 +112,13 @@ v4_tree_start(Data, #meta{ip_version = 6} = Meta) ->
         {error, {partial, Pos}} ->
             Pos;
         not_found ->
-            %% this only happens if the IPv6 database doesn't map any IPv4 addresses
-            none
+            case lookup(Meta, Data, <<0:96>>, 6) of
+                {error, {partial, Pos}} ->
+                    Pos;
+                %% this only happens if the IPv6 database doesn't map any IPv4 addresses
+                not_found ->
+                    0
+            end
     end.
 
 lookup(#meta{ip_version = V} = Meta,
