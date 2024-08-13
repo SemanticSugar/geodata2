@@ -134,10 +134,9 @@ is_compressed(Filename) ->
 load_files() ->
     case new(dbfile, ?GEODATA2_STATE_TID) of
         ok ->
-            case new(ip_to_domain, ?GEODATA2_DOMAIN_TID) of
-                _ -> % This file is optional
-                    ok
-            end;
+            % This file is optional
+            new(ip_to_domain, ?GEODATA2_DOMAIN_TID),
+            ok;
         Error -> %% This config is mandatory
             error_logger:error_report({error, geodata2_cannot_load_dbfile}),
             Error
