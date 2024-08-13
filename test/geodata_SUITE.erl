@@ -149,7 +149,7 @@ reload_files(_) ->
     application:set_env(geodata2, reload_milliseconds, 4000),
 
     %% Now a normal not_found lookup working
-    ?assertEqual(not_found, geodata2:lookup(<<"214.78.120.0">>)),
+    ?assertEqual(not_found, geodata2:lookup(<<"61.233.0.0">>)),
 
     NewFilePath =
         filename:join(
@@ -158,6 +158,7 @@ reload_files(_) ->
 
     %% waits until the reload happens..
     timer:sleep(7000),
+    %% now the same IP is found
     ?assertMatch({ok, _}, geodata2:lookup(<<"61.233.0.0">>)),
     %%
     application:stop(geodata2).
