@@ -10,7 +10,8 @@
 %% Export here the tests
 -export([lookup/1, domain_lookup/1, no_file_is_found/1, domain_file_not_found/1,
          domain_lookup_weird_ip/1, domain_lookup_not_found/1, domain_lookup_format_not_allowed/1,
-         domain_lookup_invalid_ip_with_port/1, domain_not_in_config_should_start/1]).
+         domain_lookup_invalid_ip_with_port/1, domain_not_in_config_should_start/1,
+         reload_files/1]).
 
 %%%===================================================================
 %%% CT callbacks
@@ -141,5 +142,22 @@ domain_not_in_config_should_start(_) ->
 
     %% Now a normal not_found lookup working
     ?assertEqual(not_found, geodata2:lookup_iptodomain(<<"1.1.1.1">>)),
+    %%
+    application:stop(geodata2).
+
+reload_files(_) ->
+    application:set_env(geodata2, reload_milliseconds, 4000),
+
+    %% Now a normal not_found lookup working
+    ?assertEqual(not_found, geodata2:lookup(<<"214.78.120.0">>)),
+
+    NewFilePath =
+        filename:join(
+            code:priv_dir(geodata2), "test-mgll-2.mmdb.gz"),
+    application:set_env(geodata2, dbfile, NewFilePath),
+
+    %% waits until the reload happens..
+    timer:sleep(7000),
+    ?assertMatch({ok, _}, geodata2:lookup(<<"61.233.0.0">>)),
     %%
     application:stop(geodata2).

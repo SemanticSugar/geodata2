@@ -56,34 +56,47 @@ stop() ->
     application:stop(geodata2).
 
 new(ConfigName, Ets) ->
-    ets:new(Ets, [set, protected, named_table, {read_concurrency, true}]),
-    case get_env(geodata2, ConfigName) of
-        {ok, Filename} ->
-            case filelib:is_file(Filename) of
-                true ->
-                    {ok, RawData} = file:read_file(Filename),
-                    Data =
-                        case is_compressed(Filename) of
-                            true ->
-                                zlib:gunzip(RawData);
-                            false ->
-                                RawData
-                        end,
-                    {ok, Meta} = geodata2_format:meta(Data),
-                    ets:insert(Ets, {data, Data}),
-                    ets:insert(Ets, {meta, Meta}),
-                    ok;
-                false ->
-                    {stop, {dbfile_not_found, Filename}}
-            end;
+    BinaryName = atom_to_binary(Ets),
+    TmpName = binary_to_atom(<<BinaryName/binary, "_swap">>),
+    case ets:info(Ets) of
         undefined ->
-            {stop, {config_not_set, ConfigName}}
-    end.
+            %% when this is the first time, create the table even if next the files don't exist
+            ets:new(Ets, [set, protected, named_table, {read_concurrency, true}]),
+            ets:new(TmpName, [set, protected, named_table, {read_concurrency, true}]);
+        _ ->
+            ets:new(TmpName, [set, protected, named_table, {read_concurrency, true}])
+    end,
+
+    Res = case get_env(geodata2, ConfigName) of
+              {ok, Filename} ->
+                  case filelib:is_file(Filename) of
+                      true ->
+                          {ok, RawData} = file:read_file(Filename),
+                          Data =
+                              case is_compressed(Filename) of
+                                  true ->
+                                      zlib:gunzip(RawData);
+                                  false ->
+                                      RawData
+                              end,
+                          {ok, Meta} = geodata2_format:meta(Data),
+                          ets:insert(TmpName, {data, Data}),
+                          ets:insert(TmpName, {meta, Meta}),
+                          ok;
+                      false ->
+                          {stop, {dbfile_not_found, Filename}}
+                  end;
+              undefined ->
+                  {stop, {config_not_set, ConfigName}}
+          end,
+    %% swaps tables to replace the existing table
+    ets:delete(Ets),
+    ets:rename(TmpName, Ets),
+    Res.
 
 -spec init(_) -> {ok, state()} | {stop, tuple()}.
 init(_Args) ->
     Res = load_files(),
-    maybe_launch_reload(),
 
     case Res of
         ok ->
@@ -132,17 +145,19 @@ is_compressed(Filename) ->
     <<".gz">> == iolist_to_binary(filename:extension(Filename)).
 
 load_files() ->
-    case new(dbfile, ?GEODATA2_STATE_TID) of
-        ok ->
-            % This file is optional
-            new(ip_to_domain, ?GEODATA2_DOMAIN_TID),
-            ok;
-        Error -> %% This config is mandatory
-            error_logger:error_report({error, geodata2_cannot_load_dbfile}),
-            Error
-    end.
+    Res = case new(dbfile, ?GEODATA2_STATE_TID) of
+              ok ->
+                  % This file is optional
+                  new(ip_to_domain, ?GEODATA2_DOMAIN_TID),
+                  ok;
+              Error -> %% This config is mandatory
+                  error_logger:error_report({error, geodata2_cannot_load_dbfile}),
+                  Error
+          end,
+    maybe_schedule_reload(),
+    Res.
 
-maybe_launch_reload() ->
+maybe_schedule_reload() ->
     case get_env(geodata2, reload_milliseconds) of
         {ok, Time} when is_integer(Time) ->
             erlang:send_after(Time, self(), reload);
