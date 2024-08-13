@@ -144,7 +144,7 @@ load_files() ->
 
 maybe_launch_reload() ->
     case get_env(geodata2, reload_milliseconds) of
-        Time when is_integer(Time) ->
+        {ok, Time} when is_integer(Time) ->
             erlang:send_after(Time, self(), reload);
         _ ->
             undefined
