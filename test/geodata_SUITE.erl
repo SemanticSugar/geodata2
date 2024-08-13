@@ -47,6 +47,7 @@ init_per_testcase(_Suite, Config) ->
             code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
     application:set_env(geodata2, ip_to_domain, IpToDomain),
     application:set_env(geodata2, dbfile, DBFilePath),
+    application:set_env(geodata2, reload_milliseconds, 5000),
     ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ip_to_domain)),
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {ok, _} = application:ensure_all_started(geodata2),
@@ -131,8 +132,10 @@ domain_not_in_config_should_start(_) ->
     application:unset_env(geodata2, ip_to_domain),
     % application:set_env(geodata2, dbfile, DBFilePath),
     application:unset_env(geodata2, dbfile),
+    application:unset_env(geodata2, reload_milliseconds),
     ?assertEqual(undefined, geodata2:get_env(geodata2, dbfile)),
     ?assertEqual(undefined, geodata2:get_env(geodata2, ip_to_domain)),
+    ?assertEqual(undefined, geodata2:get_env(geodata2, reload_milliseconds)),
     application:load(geodata2),
     {ok, _} = application:ensure_all_started(geodata2),
 

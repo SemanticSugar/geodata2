@@ -6,7 +6,7 @@
 -behaviour(gen_server).
 
 %% gen_server callbacks
--export([init/1, handle_call/3, handle_cast/2]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
 %% API
 -export([lookup/1, lookup_iptodomain/1, start/0, start_link/1, stop/0, get_env/2, id/1]).
 
@@ -82,15 +82,13 @@ new(ConfigName, Ets) ->
 
 -spec init(_) -> {ok, state()} | {stop, tuple()}.
 init(_Args) ->
-    case new(dbfile, ?GEODATA2_STATE_TID) of
+    Res = load_files(),
+    maybe_launch_reload(),
+
+    case Res of
         ok ->
-            case new(ip_to_domain, ?GEODATA2_DOMAIN_TID) of
-                ok ->
-                    {ok, #state{}};
-                _Error -> % Second optional
-                    {ok, #state{}}
-            end;
-        Error -> %% This config is mandatory
+            {ok, #state{}};
+        Error ->
             Error
     end.
 
@@ -98,6 +96,13 @@ handle_call(_What, _From, State) ->
     {reply, ok, State}.
 
 handle_cast(_Request, State) ->
+    {noreply, State}.
+
+handle_info(reload, State) ->
+    %% TODO: handle in the state if files are not found
+    load_files(),
+    {noreply, State};
+handle_info(_Msg, State) ->
     {noreply, State}.
 
 %%%===================================================================
@@ -125,3 +130,23 @@ id(X) ->
 
 is_compressed(Filename) ->
     <<".gz">> == iolist_to_binary(filename:extension(Filename)).
+
+load_files() ->
+    case new(dbfile, ?GEODATA2_STATE_TID) of
+        ok ->
+            case new(ip_to_domain, ?GEODATA2_DOMAIN_TID) of
+                _ -> % This file is optional
+                    ok
+            end;
+        Error -> %% This config is mandatory
+            error_logger:error_report({error, geodata2_cannot_load_dbfile}),
+            Error
+    end.
+
+maybe_launch_reload() ->
+    case get_env(geodata2, reload_milliseconds) of
+        Time when is_integer(Time) ->
+            erlang:send_after(Time, self(), reload);
+        _ ->
+            undefined
+    end.
