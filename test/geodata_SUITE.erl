@@ -10,7 +10,8 @@
 %% Export here the tests
 -export([lookup/1, domain_lookup/1, no_file_is_found/1, domain_file_not_found/1,
          domain_lookup_weird_ip/1, domain_lookup_not_found/1, domain_lookup_format_not_allowed/1,
-         domain_lookup_invalid_ip_with_port/1, domain_not_in_config_should_start/1]).
+         domain_lookup_invalid_ip_with_port/1, domain_not_in_config_should_start/1,
+         reload_files/1]).
 
 %%%===================================================================
 %%% CT callbacks
@@ -47,6 +48,7 @@ init_per_testcase(_Suite, Config) ->
             code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
     application:set_env(geodata2, ip_to_domain, IpToDomain),
     application:set_env(geodata2, dbfile, DBFilePath),
+    application:set_env(geodata2, reload_milliseconds, 5000),
     ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ip_to_domain)),
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {ok, _} = application:ensure_all_started(geodata2),
@@ -131,12 +133,32 @@ domain_not_in_config_should_start(_) ->
     application:unset_env(geodata2, ip_to_domain),
     % application:set_env(geodata2, dbfile, DBFilePath),
     application:unset_env(geodata2, dbfile),
+    application:unset_env(geodata2, reload_milliseconds),
     ?assertEqual(undefined, geodata2:get_env(geodata2, dbfile)),
     ?assertEqual(undefined, geodata2:get_env(geodata2, ip_to_domain)),
+    ?assertEqual(undefined, geodata2:get_env(geodata2, reload_milliseconds)),
     application:load(geodata2),
     {ok, _} = application:ensure_all_started(geodata2),
 
     %% Now a normal not_found lookup working
     ?assertEqual(not_found, geodata2:lookup_iptodomain(<<"1.1.1.1">>)),
+    %%
+    application:stop(geodata2).
+
+reload_files(_) ->
+    application:set_env(geodata2, reload_milliseconds, 4000),
+
+    %% Now a normal not_found lookup working
+    ?assertEqual(not_found, geodata2:lookup(<<"61.233.0.0">>)),
+
+    NewFilePath =
+        filename:join(
+            code:priv_dir(geodata2), "test-mgll-2.mmdb.gz"),
+    application:set_env(geodata2, dbfile, NewFilePath),
+
+    %% waits until the reload happens..
+    timer:sleep(7000),
+    %% now the same IP is found
+    ?assertMatch({ok, _}, geodata2:lookup(<<"61.233.0.0">>)),
     %%
     application:stop(geodata2).
