@@ -11,7 +11,10 @@
 -export([lookup/1, lookup_iptodomain/1, start/0, start_link/1, stop/0, get_env/2, id/1]).
 
 -define(GEODATA2_STATE_TID, geodata2_state).
--define(GEODATA2_DOMAIN_TID, geodata2_domain).
+-define(GEODATA2_IPV4_DOMAIN_TID, geodata2_ipv4_domain).
+-define(GEODATA2_IPV6_PREFIX_2600_DOMAIN_TID, geodata2_ipv6_prefix_2600_domain).
+-define(GEODATA2_IPV6_PREFIX_2601_DOMAIN_TID, geodata2_ipv6_prefix_2601_domain).
+-define(GEODATA2_IPV6_REST_DOMAIN_TID, geodata2_ipv6_rest_domain).
 
 -record(state, {}).
 
@@ -29,21 +32,14 @@ lookup(IP) ->
     end.
 
 lookup_iptodomain(IP) ->
-    case ets:lookup(?GEODATA2_DOMAIN_TID, data) of
-        [{data, Data}] ->
-            case ets:lookup(?GEODATA2_DOMAIN_TID, meta) of
-                [{meta, Meta}] ->
-                    case geodata2_ip:make_ip(IP) of
-                        {ok, Bits, IPV} ->
-                            geodata2_format:lookup(Meta, Data, Bits, IPV);
-                        {error, Reason} ->
-                            {error, Reason}
-                    end;
-                [] ->
-                    not_found
-            end;
-        [] ->
-            not_found
+    case geodata2_ip:make_ip(IP) of
+        {ok, Bits, 4 = IpVersion} ->
+            lookup_(?GEODATA2_IPV4_DOMAIN_TID, Bits, IpVersion);
+        {ok, Bits, 6 = IpVersion} ->
+            EtsTable = choose_ipv6_ets_table(Bits),
+            lookup_(EtsTable, Bits, IpVersion);
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 start() ->
@@ -147,8 +143,11 @@ is_compressed(Filename) ->
 load_files() ->
     Res = case new(dbfile, ?GEODATA2_STATE_TID) of
               ok ->
-                  % This file is optional
-                  new(ip_to_domain, ?GEODATA2_DOMAIN_TID),
+                  % This files are optional
+                  new(ipv4_to_domain, ?GEODATA2_IPV4_DOMAIN_TID),
+                  new(ipv6_prefix_2600_to_domain, ?GEODATA2_IPV6_PREFIX_2600_DOMAIN_TID),
+                  new(ipv6_prefix_2601_to_domain, ?GEODATA2_IPV6_PREFIX_2601_DOMAIN_TID),
+                  new(ipv6_prefix_rest_to_domain, ?GEODATA2_IPV6_REST_DOMAIN_TID),
                   ok;
               Error -> %% This config is mandatory
                   error_logger:error_report({error, geodata2_cannot_load_dbfile}),
@@ -164,3 +163,61 @@ maybe_schedule_reload() ->
         _ ->
             undefined
     end.
+
+lookup_(EtsTable, Bits, IpVersion) ->
+    case ets:lookup(EtsTable, data) of
+        [{data, Data}] ->
+            case ets:lookup(EtsTable, meta) of
+                [{meta, Meta}] ->
+                    geodata2_format:lookup(Meta, Data, Bits, IpVersion);
+                [] ->
+                    not_found
+            end;
+        [] ->
+            not_found
+    end.
+
+choose_ipv6_ets_table(<<9728:16,
+                        _W6:16,
+                        _W5:16,
+                        _W4:16,
+                        _W3:16,
+                        _W2:16,
+                        _W1:16,
+                        _W0:16>>) ->
+    %% 9728 in hexadecimal is 2600 in decimal
+    ?GEODATA2_IPV6_PREFIX_2600_DOMAIN_TID;
+choose_ipv6_ets_table(<<9729:16,
+                        _W6:16,
+                        _W5:16,
+                        _W4:16,
+                        _W3:16,
+                        _W2:16,
+                        _W1:16,
+                        _W0:16>>) ->
+    %% 9729 in hexadecimal is 2601 in decimal
+    ?GEODATA2_IPV6_PREFIX_2601_DOMAIN_TID;
+choose_ipv6_ets_table(_) ->
+    ?GEODATA2_IPV6_REST_DOMAIN_TID.
+
+%%%===================================================================
+%%% Tests
+%%%===================================================================
+
+-ifdef(TEST).
+
+-include_lib("eunit/include/eunit.hrl").
+
+choose_proper_ipv6_ets_table_test() ->
+    {ok, IpA, _} = geodata2_ip:make_ip("2600:f8b0:4005:802::1002"),
+    ?assertEqual(?GEODATA2_IPV6_PREFIX_2600_DOMAIN_TID, choose_ipv6_ets_table(IpA)),
+    {ok, IpB, _} = geodata2_ip:make_ip("2601:f8b0:4005:802::1002"),
+    ?assertEqual(?GEODATA2_IPV6_PREFIX_2601_DOMAIN_TID, choose_ipv6_ets_table(IpB)),
+    {ok, IpC, _} = geodata2_ip:make_ip("2500:f8b0:4005:802::1002"),
+    ?assertEqual(?GEODATA2_IPV6_REST_DOMAIN_TID, choose_ipv6_ets_table(IpC)),
+    {ok, IpD, _} = geodata2_ip:make_ip("3500:f8b0:4005:802::1002"),
+    ?assertEqual(?GEODATA2_IPV6_REST_DOMAIN_TID, choose_ipv6_ets_table(IpD)),
+    {ok, IpE, _} = geodata2_ip:make_ip("2600:0000:4005:802::1002"),
+    ?assertEqual(?GEODATA2_IPV6_PREFIX_2600_DOMAIN_TID, choose_ipv6_ets_table(IpE)).
+
+-endif.
