@@ -124,7 +124,6 @@ new_ip_to_domain_ets(EtsTable, Filename) ->
                           false ->
                               RawData
                       end,
-                  Lines = binary:split(Data, <<"\n">>, [global]),
                   lists:foreach(fun(Line) ->
                                    case binary:split(Line, <<",">>) of
                                        [Base64IP, Domain] ->
@@ -134,7 +133,7 @@ new_ip_to_domain_ets(EtsTable, Filename) ->
                                            ok
                                    end
                                 end,
-                                Lines),
+                                binary:split(Data, <<"\n">>, [global])),
                   ok;
               false ->
                   {stop, {dbfile_not_found, Filename}}
