@@ -49,17 +49,7 @@ stop() ->
     application:stop(geodata2).
 
 new(ConfigName, Ets) ->
-    BinaryName = atom_to_binary(Ets),
-    TmpName = binary_to_atom(<<BinaryName/binary, "_swap">>),
-    case ets:info(Ets) of
-        undefined ->
-            %% when this is the first time, create the table even if next the files don't exist
-            ets:new(Ets, [set, protected, named_table, {read_concurrency, true}]),
-            ets:new(TmpName, [set, protected, named_table, {read_concurrency, true}]);
-        _ ->
-            ets:new(TmpName, [set, protected, named_table, {read_concurrency, true}])
-    end,
-
+    TmpTable = create_main_and_tmp_ets_tables(Ets),
     Res = case get_env(geodata2, ConfigName) of
               {ok, Filename} ->
                   case filelib:is_file(Filename) of
@@ -73,8 +63,8 @@ new(ConfigName, Ets) ->
                                       RawData
                               end,
                           {ok, Meta} = geodata2_format:meta(Data),
-                          ets:insert(TmpName, {data, Data}),
-                          ets:insert(TmpName, {meta, Meta}),
+                          ets:insert(TmpTable, {data, Data}),
+                          ets:insert(TmpTable, {meta, Meta}),
                           ok;
                       false ->
                           {stop, {dbfile_not_found, Filename}}
@@ -82,9 +72,7 @@ new(ConfigName, Ets) ->
               undefined ->
                   {stop, {config_not_set, ConfigName}}
           end,
-    %% swaps tables to replace the existing table
-    ets:delete(Ets),
-    ets:rename(TmpName, Ets),
+    swap_ets_tables(TmpTable, Ets),
     Res.
 
 -spec init(_) -> {ok, state()} | {stop, tuple()}.
@@ -125,32 +113,51 @@ lookup_ip_to_domain_(EtsTable, IP) ->
     end.
 
 new_ip_to_domain_ets(EtsTable, Filename) ->
-    ets:new(EtsTable, [set, protected, named_table, {read_concurrency, true}]),
-    case filelib:is_file(Filename) of
-        true ->
-            {ok, RawData} = file:read_file(Filename),
-            Data =
-                case is_compressed(Filename) of
-                    true ->
-                        zlib:gunzip(RawData);
-                    false ->
-                        RawData
-                end,
-            Lines = binary:split(Data, <<"\n">>, [global]),
-            lists:foreach(fun(Line) ->
-                             case binary:split(Line, <<",">>) of
-                                 [Base64IP, Domain] ->
-                                     ets:insert(EtsTable, {Base64IP, Domain}),
-                                     ok;
-                                 _ ->
-                                     ok
-                             end
-                          end,
-                          Lines),
-            ok;
-        false ->
-            {stop, {dbfile_not_found, Filename}}
-    end.
+    TmpTable = create_main_and_tmp_ets_tables(EtsTable),
+    Res = case filelib:is_file(Filename) of
+              true ->
+                  {ok, RawData} = file:read_file(Filename),
+                  Data =
+                      case is_compressed(Filename) of
+                          true ->
+                              zlib:gunzip(RawData);
+                          false ->
+                              RawData
+                      end,
+                  Lines = binary:split(Data, <<"\n">>, [global]),
+                  lists:foreach(fun(Line) ->
+                                   case binary:split(Line, <<",">>) of
+                                       [Base64IP, Domain] ->
+                                           ets:insert(TmpTable, {Base64IP, Domain}),
+                                           ok;
+                                       _ ->
+                                           ok
+                                   end
+                                end,
+                                Lines),
+                  ok;
+              false ->
+                  {stop, {dbfile_not_found, Filename}}
+          end,
+    swap_ets_tables(TmpTable, EtsTable),
+    Res.
+
+create_main_and_tmp_ets_tables(EtsTable) ->
+    BinaryName = atom_to_binary(EtsTable),
+    TmpTable = binary_to_atom(<<BinaryName/binary, "_swap">>),
+    case ets:info(EtsTable) of
+        undefined ->
+            %% when this is the first time, create the table even if next the files don't exist
+            ets:new(EtsTable, [set, protected, named_table, {read_concurrency, true}]),
+            ets:new(TmpTable, [set, protected, named_table, {read_concurrency, true}]);
+        _ ->
+            ets:new(TmpTable, [set, protected, named_table, {read_concurrency, true}])
+    end,
+    TmpTable.
+
+swap_ets_tables(TmpTable, EtsTable) ->
+    ets:delete(EtsTable),
+    ets:rename(TmpTable, EtsTable).
 
 get_env(App, Key) ->
     {ConfigModule, ConfigFun} =
