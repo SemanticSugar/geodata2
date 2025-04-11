@@ -11,7 +11,8 @@
 -export([lookup/1, lookup_iptodomain/1, start/0, start_link/1, stop/0, get_env/2, id/1]).
 
 -define(GEODATA2_STATE_TID, geodata2_state).
--define(GEODATA2_DOMAIN_TID, geodata2_domain).
+-define(GEODATA2_IPV4_DOMAIN_TID, geodata2_ipv4_domain).
+-define(GEODATA2_IPV6_DOMAIN_TID, geodata2_ipv6_domain).
 
 -record(state, {}).
 
@@ -29,21 +30,13 @@ lookup(IP) ->
     end.
 
 lookup_iptodomain(IP) ->
-    case ets:lookup(?GEODATA2_DOMAIN_TID, data) of
-        [{data, Data}] ->
-            case ets:lookup(?GEODATA2_DOMAIN_TID, meta) of
-                [{meta, Meta}] ->
-                    case geodata2_ip:make_ip(IP) of
-                        {ok, Bits, IPV} ->
-                            geodata2_format:lookup(Meta, Data, Bits, IPV);
-                        {error, Reason} ->
-                            {error, Reason}
-                    end;
-                [] ->
-                    not_found
-            end;
-        [] ->
-            not_found
+    case geodata2_ip:make_ip(IP) of
+        {ok, Bits, 4 = _IpVersion} ->
+            lookup_ip_to_domain_(?GEODATA2_IPV4_DOMAIN_TID, Bits);
+        {ok, Bits, 6 = _IpVersion} ->
+            lookup_ip_to_domain_(?GEODATA2_IPV6_DOMAIN_TID, Bits);
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 start() ->
@@ -122,6 +115,43 @@ handle_info(_Msg, State) ->
 %%% Internal functions
 %%%===================================================================
 
+lookup_ip_to_domain_(EtsTable, IP) ->
+    Base64IP = base64:encode(IP),
+    case ets:lookup(EtsTable, Base64IP) of
+        [{Base64IP, Domain}] ->
+            {ok, [{<<"domain">>, Domain}]};
+        [] ->
+            not_found
+    end.
+
+new_ip_to_domain_ets(EtsTable, Filename) ->
+    ets:new(EtsTable, [set, protected, named_table, {read_concurrency, true}]),
+    case filelib:is_file(Filename) of
+        true ->
+            {ok, RawData} = file:read_file(Filename),
+            Data =
+                case is_compressed(Filename) of
+                    true ->
+                        zlib:gunzip(RawData);
+                    false ->
+                        RawData
+                end,
+            Lines = binary:split(Data, <<"\n">>, [global]),
+            lists:foreach(fun(Line) ->
+                             case binary:split(Line, <<",">>) of
+                                 [Base64IP, Domain] ->
+                                     ets:insert(EtsTable, {Base64IP, Domain}),
+                                     ok;
+                                 _ ->
+                                     ok
+                             end
+                          end,
+                          Lines),
+            ok;
+        false ->
+            {stop, {dbfile_not_found, Filename}}
+    end.
+
 get_env(App, Key) ->
     {ConfigModule, ConfigFun} =
         case application:get_env(geodata2, config_interp) of
@@ -147,8 +177,19 @@ is_compressed(Filename) ->
 load_files() ->
     Res = case new(dbfile, ?GEODATA2_STATE_TID) of
               ok ->
-                  % This file is optional
-                  new(ip_to_domain, ?GEODATA2_DOMAIN_TID),
+                  % This two files are optional
+                  case get_env(geodata2, ipv4_to_domain) of
+                      {ok, IPv4File} ->
+                          new_ip_to_domain_ets(?GEODATA2_IPV4_DOMAIN_TID, IPv4File);
+                      undefined ->
+                          ok
+                  end,
+                  case get_env(geodata2, ipv6_to_domain) of
+                      {ok, IPv6File} ->
+                          new_ip_to_domain_ets(?GEODATA2_IPV6_DOMAIN_TID, IPv6File);
+                      undefined ->
+                          ok
+                  end,
                   ok;
               Error -> %% This config is mandatory
                   error_logger:error_report({error, geodata2_cannot_load_dbfile}),

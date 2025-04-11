@@ -8,18 +8,19 @@
 -export([all/0, init_per_suite/1, end_per_suite/1, init_per_testcase/2,
          end_per_testcase/2]).
 %% Export here the tests
--export([lookup/1, domain_lookup/1, no_file_is_found/1, domain_file_not_found/1,
-         domain_lookup_weird_ip/1, domain_lookup_not_found/1, domain_lookup_format_not_allowed/1,
-         domain_lookup_invalid_ip_with_port/1, domain_not_in_config_should_start/1,
-         reload_files/1]).
+-export([lookup/1, no_file_is_found/1, domain_file_not_found/1, domain_lookup_weird_ip/1,
+         domain_lookup_ipv4/1, domain_lookup_ipv6/1, domain_lookup_not_found/1,
+         domain_lookup_format_not_allowed/1, domain_lookup_invalid_ip_with_port/1,
+         domain_not_in_config_should_start/1, reload_files/1]).
 
 %%%===================================================================
 %%% CT callbacks
 %%%===================================================================
 all() ->
     [lookup,
-     domain_lookup,
      no_file_is_found,
+     domain_lookup_ipv4,
+     domain_lookup_ipv6,
      domain_file_not_found,
      domain_lookup_weird_ip,
      domain_lookup_not_found,
@@ -40,16 +41,21 @@ init_per_testcase(domain_file_not_found, Config) ->
 init_per_testcase(_Suite, Config) ->
     %% TODO, use smaller test file
     application:load(geodata2),
-    IpToDomain =
+    IpV4ToDomain =
         filename:join(
-            code:priv_dir(geodata2), "test.mmdb.gz"),
+            code:priv_dir(geodata2), "test-ipv4-to-domain.csv.gz"),
+    IpV6ToDomain =
+        filename:join(
+            code:priv_dir(geodata2), "test-ipv6-to-domain.csv.gz"),
     DBFilePath =
         filename:join(
             code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
-    application:set_env(geodata2, ip_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv4_to_domain, IpV4ToDomain),
+    application:set_env(geodata2, ipv6_to_domain, IpV6ToDomain),
     application:set_env(geodata2, dbfile, DBFilePath),
     application:set_env(geodata2, reload_milliseconds, 5000),
-    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ip_to_domain)),
+    ?assertEqual({ok, IpV4ToDomain}, geodata2:get_env(geodata2, ipv4_to_domain)),
+    ?assertEqual({ok, IpV6ToDomain}, geodata2:get_env(geodata2, ipv6_to_domain)),
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {ok, _} = application:ensure_all_started(geodata2),
     Config.
@@ -67,10 +73,16 @@ lookup(_) ->
     ?assertMatch({ok, _}, geodata2:lookup(<<"216.58.202.14">>)),
     ok.
 
-%% Test a domain lookup
-domain_lookup(_) ->
-    ?assertEqual({ok, [{<<"domain">>, <<"google.com">>}]},
-                 geodata2:lookup_iptodomain(<<"216.58.202.0">>)),
+%% Test a domain ipv4 lookup
+domain_lookup_ipv4(_) ->
+    ?assertEqual({ok, [{<<"domain">>, <<"comcast.ent">>}]},
+                 geodata2:lookup_iptodomain(<<"71.63.226.231">>)),
+    ok.
+
+%% Test a domain ipv6 lookup
+domain_lookup_ipv6(_) ->
+    ?assertEqual({ok, [{<<"domain">>, <<"susanmurphy.ca">>}]},
+                 geodata2:lookup_iptodomain(<<"2001:569:bdcb:e000:a111:c5f7:709b:ff28">>)),
     ok.
 
 %% Test a domain lookup with weird input
