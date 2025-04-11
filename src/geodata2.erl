@@ -148,10 +148,10 @@ create_main_and_tmp_ets_tables(EtsTable) ->
     case ets:info(EtsTable) of
         undefined ->
             %% when this is the first time, create the table even if next the files don't exist
-            ets:new(EtsTable, [set, protected, named_table, {read_concurrency, true}]),
-            ets:new(TmpTable, [set, protected, named_table, {read_concurrency, true}]);
+            ets:new(EtsTable, [set, protected, named_table, {read_concurrency, true}, compressed]),
+            ets:new(TmpTable, [set, protected, named_table, {read_concurrency, true}, compressed]);
         _ ->
-            ets:new(TmpTable, [set, protected, named_table, {read_concurrency, true}])
+            ets:new(TmpTable, [set, protected, named_table, {read_concurrency, true}, compressed])
     end,
     TmpTable.
 
