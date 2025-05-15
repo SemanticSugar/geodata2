@@ -46,10 +46,16 @@ init_per_testcase(_Suite, Config) ->
     DBFilePath =
         filename:join(
             code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
-    application:set_env(geodata2, ip_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv4_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv6_prefix_2600_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv6_prefix_2601_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv6_prefix_rest_to_domain, IpToDomain),
     application:set_env(geodata2, dbfile, DBFilePath),
     application:set_env(geodata2, reload_milliseconds, 5000),
-    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ip_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv4_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv6_prefix_2600_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv6_prefix_2601_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv6_prefix_rest_to_domain)),
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {ok, _} = application:ensure_all_started(geodata2),
     Config.
@@ -67,10 +73,20 @@ lookup(_) ->
     ?assertMatch({ok, _}, geodata2:lookup(<<"216.58.202.14">>)),
     ok.
 
-%% Test a domain lookup
+%% Tests domain lookup using all existing files
 domain_lookup(_) ->
+    %% IpV4
     ?assertEqual({ok, [{<<"domain">>, <<"google.com">>}]},
                  geodata2:lookup_iptodomain(<<"216.58.202.0">>)),
+    % %% IpV6 2600 prefix
+    % ?assertEqual({ok, [{<<"domain">>, <<"google.com">>}]},
+    %              geodata2:lookup_iptodomain(<<"2600:f8b0:4005:802::1002">>)),
+    % %% IpV6 2601 prefix
+    % ?assertEqual({ok, [{<<"domain">>, <<"google.com">>}]},
+    %              geodata2:lookup_iptodomain(<<"2601:f8b0:4005:802::1002">>)),
+    % %% IpV6 rest
+    % ?assertEqual({ok, [{<<"domain">>, <<"google.com">>}]},
+    %              geodata2:lookup_iptodomain(<<"2500:f8b0:4005:802::1002">>)),
     ok.
 
 %% Test a domain lookup with weird input
@@ -99,9 +115,15 @@ domain_file_not_found(_) ->
     DBFilePath =
         filename:join(
             code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
-    application:set_env(geodata2, ip_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv4_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv6_prefix_2600_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv6_prefix_2601_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv6_prefix_rest_to_domain, IpToDomain),
     application:set_env(geodata2, dbfile, DBFilePath),
-    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ip_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv4_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv6_prefix_2600_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv6_prefix_2601_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv6_prefix_rest_to_domain)),
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {ok, _} = application:ensure_all_started(geodata2),
 
@@ -119,9 +141,15 @@ no_file_is_found(_) ->
     DBFilePath =
         filename:join(
             code:priv_dir(geodata2), "notfound.mmdb.gz"),
-    application:set_env(geodata2, ip_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv4_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv6_prefix_2600_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv6_prefix_2601_to_domain, IpToDomain),
+    application:set_env(geodata2, ipv6_prefix_rest_to_domain, IpToDomain),
     application:set_env(geodata2, dbfile, DBFilePath),
-    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ip_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv4_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv6_prefix_2600_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv6_prefix_2601_to_domain)),
+    ?assertEqual({ok, IpToDomain}, geodata2:get_env(geodata2, ipv6_prefix_rest_to_domain)),
     ?assertEqual({ok, DBFilePath}, geodata2:get_env(geodata2, dbfile)),
     {error, _} = application:ensure_all_started(geodata2).
 
@@ -130,12 +158,18 @@ domain_not_in_config_should_start(_) ->
     % DBFilePath =
     %     filename:join(
     %         code:priv_dir(geodata2), "test-mgll.mmdb.gz"),
-    application:unset_env(geodata2, ip_to_domain),
+    application:unset_env(geodata2, ipv4_to_domain),
+    application:unset_env(geodata2, ipv6_prefix_2600_to_domain),
+    application:unset_env(geodata2, ipv6_prefix_2601_to_domain),
+    application:unset_env(geodata2, ipv6_prefix_rest_to_domain),
     % application:set_env(geodata2, dbfile, DBFilePath),
     application:unset_env(geodata2, dbfile),
     application:unset_env(geodata2, reload_milliseconds),
     ?assertEqual(undefined, geodata2:get_env(geodata2, dbfile)),
-    ?assertEqual(undefined, geodata2:get_env(geodata2, ip_to_domain)),
+    ?assertEqual(undefined, geodata2:get_env(geodata2, ipv4_to_domain)),
+    ?assertEqual(undefined, geodata2:get_env(geodata2, ipv6_prefix_2600_to_domain)),
+    ?assertEqual(undefined, geodata2:get_env(geodata2, ipv6_prefix_2601_to_domain)),
+    ?assertEqual(undefined, geodata2:get_env(geodata2, ipv6_prefix_rest_to_domain)),
     ?assertEqual(undefined, geodata2:get_env(geodata2, reload_milliseconds)),
     application:load(geodata2),
     {ok, _} = application:ensure_all_started(geodata2),
